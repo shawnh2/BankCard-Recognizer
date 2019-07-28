@@ -18,7 +18,7 @@ cimport numpy as np
 cimport cython
 from libc.math cimport tan
 from libc.stdint cimport uint8_t
-from toolkits import crop
+from aug.toolkits import crop
 
 
 @cython.boundscheck(False)

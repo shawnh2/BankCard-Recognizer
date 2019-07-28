@@ -3,7 +3,7 @@ is to artificially enlarge the dataset.
 And in this case, we came up with a way to preprocess the image by using
 some simple transformation in data augmentation.
 
-The parameter you should give to the operation below:
+The parameters that you shall give to the functions:
  width_shift_range: int              |  Input: img_array, factor     |  Output: img_array
 height_shift_range: int              |  Input: img_array, factor     |  Output: img_array
               zoom: int              |  Input: img_array, factor     |  Output: img_array
@@ -18,9 +18,9 @@ height_shift_range: int              |  Input: img_array, factor     |  Output: 
 import random
 import datetime
 
-from bankcard_rec.aug.toolkits import (width_shift_range, height_shift_range, zoom,
-                                       rotate, horizontal_flip, vertical_flip, blur)
-from bankcard_rec.aug.ctoolkits import add_noise, shear, fill
+from aug.toolkits import (width_shift_range, height_shift_range, zoom,
+                          rotate, horizontal_flip, vertical_flip, blur)
+from aug.ctoolkits import add_noise, shear, fill
 
 random.seed(datetime.datetime.now())
 # In these augmentation, not all of them should be involved in every transformation.
@@ -35,7 +35,7 @@ class DataAugmentation:
         self.img_h, self.img_w, _ = img_array.shape
         self.ratio = min_occur_ratio
 
-        # saving parameters locally
+        # saving parameters locally with its code
         self.height_shift = param_dict['hsr']
         self.width_shift = param_dict['wsr']
         self.rotate = param_dict['ror']
@@ -48,14 +48,12 @@ class DataAugmentation:
 
     def feed(self, batch=32):
         for _ in range(batch):
-            # It shall no stop until feed out one epoch.
             img = self.img_array
 
             # -------------------------------------
             # These are transformation that should be
             # involved in every epochs.
-            # The every random volume is been generated here,
-            # so don't bother do it in every function itself.
+            # Every random volume is been generated here.
 
             if self.width_shift != 0:
                 shift_l = random.randint(0, self.width_shift)
@@ -83,7 +81,7 @@ class DataAugmentation:
             # These are transformation that may not be
             # involved in every epochs.
             # Cause it's happened randomly,
-            # so give it a probability to occur.
+            # so give it a probability to happen.
 
             if self.noise != 0 and self.random_occur(self.ratio):
                 img = add_noise(img, self.noise, self.img_h, self.img_w)

@@ -6,7 +6,7 @@ import numpy
 setup(
 	name='ctoolkits',
 	description='Augmentation for Image data.',
-	long_description='Toolkits that provide several functions for data augment.'
+	long_description='Toolkits that provide several functions for data augment.',
 	version='1.2.1',
 	author='Shawn Hu',
     cmdclass = {'build_ext': build_ext},
