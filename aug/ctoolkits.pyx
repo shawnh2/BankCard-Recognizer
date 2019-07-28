@@ -1,5 +1,5 @@
 """In data augmentation, this part may be the biggest consumption,
-and takes us a lot of time.
+and it takes us a lot of time.
 In order to optimize, we compile the code that most like python and numpy to C by cython.
 and find it's becomes cheaper and faster than original python code.
 
@@ -10,7 +10,7 @@ We repeat one function 10^N times per epoch, and get avg-time:
      shear           3          6.9081           3.9274           x 1.75
      fill            3          38.0633          0.0312           x 1219.97
      resize          2          27.9830          0.0249           x 1123.81
-     cv2-resize      2                           0.0029           / 85.86      [worse]
+     cv2-resize      2                           0.0029           / 85.86      [even worse]
 """
 
 import numpy as np
