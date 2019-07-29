@@ -5,12 +5,9 @@ import shutil
 import cv2
 import numpy as np
 
-from aug import DataAugmentation
 
-
-random.seed(58)
-CHARS = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_')
-IMG_SHAPE = (46, 120, 3)
+char2num_dict = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '_': 10}
+num2char_dict = {value: key for key, value in char2num_dict.items()}
 
 
 def train_test_spilt(inputs_dir, output_dir, test_train_ratio=0.2):
@@ -48,14 +45,8 @@ def train_test_spilt(inputs_dir, output_dir, test_train_ratio=0.2):
 
 
 class ImageTextGenerator:
-    """# The shape of image with following orders:
-          (img_height, img_width, img_channel).
-       # The backend of image is default by:
-          channel_last.
-    """
 
     def __init__(self,
-                 dirs,
                  width_shift_range: int = 0,
                  height_shift_range: int = 0,
                  zoom_range: int = 0,
@@ -65,19 +56,6 @@ class ImageTextGenerator:
                  noise_factor: float = 0.,
                  horizontal_flip: bool = False,
                  vertical_flip: bool = False):
-
-        self.img_h, self.img_w, self.img_c = IMG_SHAPE
-        self.chars_index = dict(zip(CHARS, range(len(CHARS))))
-        self.dirs = dirs
-
-        self.samples = []
-        for filename in os.listdir(dirs):
-            name, ext = os.path.splitext(filename)
-            img_filepath = os.path.join(dirs, filename)
-            description = name[:4]
-            self.samples.append([img_filepath, description])
-        self.cur_index = 0
-        self.n = len(self.samples)
 
         # the abbreviation 'code:params' of augment operation
         self.param_dict = {
@@ -91,96 +69,67 @@ class ImageTextGenerator:
             'hfl': horizontal_flip,
             'vfl': vertical_flip,
         }
-        # the sign of whether taking any augmentation
-        self.aug_switch = any(self.param_dict.values())
-
-    def _process_img(self, img):
-        # Extract this part from fetch function.
-        # Process the each image with this procedure.
-        img = cv2.resize(img, (self.img_w, self.img_h))
-        img = img.astype(np.float32)
-        img /= 255
-        return img
-
-    def _fetch_with_aug(self, batch_size):
-        # Every time fetch one, soon will run out the samples.
-        # So when reach the deadline, pick one index randomly.
-        if self.cur_index >= self.n:
-            self.cur_index = random.randint(0, self.n-1)
-        # In batch size, the first one image is original one,
-        # and other batch_size-1 is the augment image.
-        img_filepath, description = self.samples[self.cur_index]
-        self.cur_index += 1
-        # Initialize x and y data, also img and str data
-        x_data = np.zeros((batch_size, self.img_h, self.img_w, self.img_c), dtype=np.float32)
-        y_data = [description] * batch_size
-
-        img = cv2.imread(img_filepath)
-        # Prepare the image augment.
-        # Because in this time, img still keep dtype as uint8
-        # and the DataAugmentation only accept this.
-        aug = DataAugmentation(img, self.param_dict)
-        # This add into the first original image.
-        x_data[0] = self._process_img(img)
-        # Generate the augmentation with size(batch-1).
-        for i, aug_img in enumerate(aug.feed(batch_size-1), start=1):
-            x_data[i] = self._process_img(aug_img)
-        # Merge x_data(image) together and duplicate the label.
-
-        return x_data, y_data
-
-    def _build_data_without_aug(self):
-        # These class variables will be activated when this methods has been called.
-        # Because of the mini-batch of validation dataset,
-        # these data should be arranged as soon as possible.
-        self.imgs = np.zeros((self.n, self.img_h, self.img_w, self.img_c), dtype=np.float32)
-        self.texts = []
-        for i, (img_filepath, description) in enumerate(self.samples):
-            img = cv2.imread(img_filepath)
-            self.imgs[i] = self._process_img(img)
-            self.texts.append(description)
-
-    def _fetch_without_aug(self, batch_size):
-        self.cur_index += 1
-        if self.cur_index + batch_size >= self.n:
-            self.cur_index = 0
-        return (self.imgs[self.cur_index: self.cur_index + batch_size],
-                self.texts[self.cur_index: self.cur_index + batch_size])
-
-    def flow(self, batch_size):
-        """
-        This kind of flow is suit for training generator.
-        In this flow, batch_size must assign.
-        Do that because the original dataset will soon be run out.
-
-        :param batch_size: contains (one) sample (and rest are augment).
-        :return: one epochs of data (with augmentation).
-        """
-        assert batch_size > 0
-        # Build dataset in silence.
-        if not self.aug_switch:
-            self._build_data_without_aug()
-        while True:
-            # Verdict of which fetch method should be taken
-            if self.aug_switch:
-                x_data, y_data = self._fetch_with_aug(batch_size)
-            else:
-                x_data, y_data = self._fetch_without_aug(batch_size)
-            # Mapping the chars with index of it.
-            y_tmp = np.array(list(map(lambda x: [self.chars_index[a] for a in list(x)], y_data)), dtype=np.uint8)
-            ys = np.zeros([y_tmp.shape[1], batch_size, len(CHARS)])
-            for batch in range(batch_size):
-                for i, row in enumerate(y_tmp[batch]):
-                    ys[i, batch, row] = 1
-
-            yield x_data, [y for y in ys]
 
 
 class DataGenerator:
 
-    def __init__(self,img_dir, img_wh_shape, batch_size, max_label_length):
+    def __init__(self, img_dir, img_wh_shape, batch_size, down_sample_factor, max_label_length):
         self.img_dir = img_dir
         self.img_w, self.img_h = img_wh_shape
         self.batch_size = batch_size
+        self.per_pred_label_length = int(self.img_w // down_sample_factor)
         self.max_label_length = max_label_length
 
+        self.img_samples = []
+        self.label_samples = []
+        for filename in os.listdir(self.img_dir):
+            name, ext = os.path.splitext(filename)
+            img_path = os.path.join(self.img_dir, filename)
+            label = name[:4]
+            self.img_samples.append(img_path)
+            self.label_samples.append(label)
+        self.img_samples = np.array(self.img_samples)
+        self.label_samples = np.array(self.label_samples)
+
+        self.img_nbr = len(self.img_samples)
+        index = np.random.permutation(self.img_nbr)
+        # np.random.permutation: same effects as shuffle but with return(a copy)
+        self.img_samples = self.img_samples[index]
+        self.label_samples = self.label_samples[index]
+
+    def get_data(self):
+        labels_length = np.zeros((self.batch_size, 1))
+        pred_labels_length = np.full((self.batch_size, 1), self.per_pred_label_length, np.float64)
+
+        while True:
+            data, labels = [], []
+            to_network_idx = np.random.choice(self.img_nbr, self.batch_size, replace=False)
+            img_to_network = self.img_samples[to_network_idx]
+            match_labels = self.label_samples[to_network_idx]
+
+            for i, img_file in enumerate(img_to_network):
+                img = cv2.imread(img_file)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                img = cv2.resize(img, (self.img_w, self.img_h))
+                data.append(img)
+
+                label = match_labels[i]
+                labels_length[i][0] = len(label)
+                nbr_label = [char2num_dict[ch] for ch in label]
+                for n in range(self.max_label_length - len(label)):
+                    nbr_label.append(char2num_dict['_'])
+                labels.append(nbr_label)
+
+            data = np.array(data, dtype=np.float64) / 255.0 * 2 - 1
+            data = np.expand_dims(data, axis=-1)
+            labels = np.array(labels, dtype=np.float64)
+
+            inputs = {
+                "y_true": labels,
+                "img_inputs": data,
+                "y_pred_length": pred_labels_length,
+                "y_true_length": labels_length
+            }
+            outputs = {"ctc_loss_output": np.zeros((self.batch_size, 1), dtype=np.float64)}
+
+            yield (inputs, outputs)
