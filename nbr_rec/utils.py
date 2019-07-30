@@ -11,8 +11,7 @@ num2char_dict = {value: key for key, value in char2num_dict.items()}
 
 
 def train_test_spilt(inputs_dir, output_dir, test_train_ratio=0.2):
-    """In this spilt, train and test dataset
-    is better when train takes 80% and test takes 20%.
+    """Train and test dataset is better to take 4:1 -> (0.8:0.2)
     The number of this ratio can be changed also.
     But still recommend 20% of test takes.
     """
@@ -44,6 +43,7 @@ def train_test_spilt(inputs_dir, output_dir, test_train_ratio=0.2):
     print("[*]Training and validation dataset split successfully.")
 
 
+"""
 class ImageTextGenerator:
 
     def __init__(self,
@@ -69,6 +69,7 @@ class ImageTextGenerator:
             'hfl': horizontal_flip,
             'vfl': vertical_flip,
         }
+"""
 
 
 class DataGenerator:
@@ -92,7 +93,7 @@ class DataGenerator:
         self.label_samples = np.array(self.label_samples)
 
         self.img_nbr = len(self.img_samples)
-        index = np.random.permutation(self.img_nbr)
+        index = np.random.permutation(self.img_samples.shape[0])
         # np.random.permutation: same effects as shuffle but with return(a copy)
         self.img_samples = self.img_samples[index]
         self.label_samples = self.label_samples[index]
@@ -111,6 +112,7 @@ class DataGenerator:
                 img = cv2.imread(img_file)
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 img = cv2.resize(img, (self.img_w, self.img_h))
+                img = img.astype(np.float32)
                 data.append(img)
 
                 label = match_labels[i]
@@ -123,7 +125,6 @@ class DataGenerator:
             data = np.array(data, dtype=np.float64) / 255.0 * 2 - 1
             data = np.expand_dims(data, axis=-1)
             labels = np.array(labels, dtype=np.float64)
-
             inputs = {
                 "y_true": labels,
                 "img_inputs": data,

@@ -8,8 +8,8 @@ def main():
     num_classes = 11
     max_label_length = 26
     downsample_factor = 4
-    batch_size = 64
-    epochs = 100
+    batch_size = 32
+    epochs = 20
 
     model = CRNN.build(img_size, num_classes, max_label_length)
     CRNN.train(model, train_img_dir, val_img_dir, weight_save_path,
