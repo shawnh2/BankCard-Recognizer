@@ -1,0 +1,26 @@
+<annotation verified="no">
+  <folder>JPEGImages</folder>
+  <filename>000861</filename>
+  <path>X:\projects\bankcard_rec\ssd\VOC2007\JPEGImages\000861.png</path>
+  <source>
+    <database>Unknown</database>
+  </source>
+  <size>
+    <width>120</width>
+    <height>46</height>
+    <depth>3</depth>
+  </size>
+  <segmented>0</segmented>
+  <object>
+    <name>nbr</name>
+    <pose>Unspecified</pose>
+    <truncated>1</truncated>
+    <Difficult>0</Difficult>
+    <bndbox>
+      <xmin>1</xmin>
+      <ymin>1</ymin>
+      <xmax>120</xmax>
+      <ymax>45</ymax>
+    </bndbox>
+  </object>
+</annotation>
