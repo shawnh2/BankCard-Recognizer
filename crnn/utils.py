@@ -38,3 +38,13 @@ def train_test_spilt(inputs_dir, output_dir, test_train_ratio=0.2):
 
     print("[*]Training and validation dataset split successfully.")
 
+
+
+
+
+def fake_ctc_loss(y_true, y_pred):
+    '''
+    这个函数是为了符合keras comepile的要求入口参数只能有y_true和y_pred
+    之后在结合我们的ctc_loss_layer一起工作
+    '''
+    return y_pred
