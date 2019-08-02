@@ -1,3 +1,6 @@
+import os
+
+from keras import callbacks
 from keras import initializers
 from keras import backend as K
 from keras.models import Model
@@ -29,7 +32,7 @@ def fake_ctc_loss(y_true, y_pred):
 class CNN_BLSTM_CTC:
 
     @staticmethod
-    def build(img_size=(256, 32), num_classes=11, max_label_length=26):
+    def build(img_size, num_classes, max_label_length):
 
         initializer = initializers.he_normal()
         img_width, img_height = img_size
@@ -92,21 +95,40 @@ class CNN_BLSTM_CTC:
         return model
 
     @staticmethod
-    def train(model, src_dir, save_path, img_size, batch_size, max_label_length, down_sample_factor, epochs):
-        print("[*] Training will start soon.")
-        model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss})
+    def train(model, src_dir, save_dir, img_size, batch_size, max_label_length, down_sample_factor, epochs):
+        print("[*] Setting up for checkpoints.")
+        ckpt = callbacks.ModelCheckpoint(save_dir + "ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5",
+                                         save_weights_only=True, save_best_only=True)
+        reduce_lr_cbk = callbacks.ReduceLROnPlateau(patience=3)
+        logging = callbacks.TensorBoard(log_dir=save_dir)
 
+        print("[*] Setting up for compiler.")
+        model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss})
         print("[*] Preparing data generator.")
         train_list, val_list = train_val_split(src_dir)
         train_gen = DataGenerator(train_list, img_size, down_sample_factor, batch_size, max_label_length,
-                                  max_aug_nbr=80, width_shift_range=15, height_shift_range=10, zoom_range=12,
-                                  shear_range=15, rotation_range=20, blur_factor=5, add_noise_factor=0.01, has_wrapped_dataset="train.npz")
+                                  max_aug_nbr=50, width_shift_range=15, height_shift_range=10, zoom_range=12,
+                                  shear_range=15, rotation_range=20, blur_factor=5, add_noise_factor=0.01)
         val_gen = DataGenerator(val_list, img_size, down_sample_factor, batch_size, max_label_length)
         print("[*] Training start!")
         model.fit_generator(generator=train_gen.flow(),
-                            steps_per_epoch=2*train_gen.data_nbr // batch_size,
+                            steps_per_epoch=200,
                             validation_data=val_gen.flow(),
                             validation_steps=val_gen.data_nbr // batch_size,
+                            callbacks=[ckpt, reduce_lr_cbk, logging],
                             epochs=epochs)
-        model.save(save_path + "model.h5")
-        print("[*] Model has been successfully saved in %s!" % save_path)
+        print("[*] Training finished!")
+        model.save(save_dir + "model.h5")
+        print("[*] Model has been successfully saved in %s!" % save_dir)
+
+        # If do data augment, will generate a temp.npz file
+        # Usually it's very large, so clean it and save some space.
+        if train_gen.local_dataset_path is not None:
+            size = os.path.getsize(train_gen.local_dataset_path)
+            size = size / float(1024 ** 2)
+            print("[!] The temp data is token %.2f Mb space." % size)
+            op = input("   Do you want clean it? [y/n]: ")
+            if op == 'y':
+                os.remove(train_gen.local_dataset_path)
+
+        return 0

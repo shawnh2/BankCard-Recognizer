@@ -33,7 +33,7 @@ def train_val_split(src_dir, val_split_ratio=0.15):
 
 
 def data_wrapper(src_list, img_shape, max_label_length,
-                 max_aug_nbr=0, aug_param_dict=None, name="dataset"):
+                 max_aug_nbr=1, aug_param_dict=None, name="temp"):
     """
     When fetching data to the training generator,
     the DataGenerator will select one batch from Pool randomly.
@@ -54,12 +54,21 @@ def data_wrapper(src_list, img_shape, max_label_length,
                            'hfl': horizontal_flip         'vfl': vertical_flip
                            'nof': noise_factor            'blr': blur_factor
     :param name: Providing a name for this wrapper.
-    :return: data, labels, labels_length
+    :return: data, labels, labels_length or local_path.
     """
-    assert max_aug_nbr >= 0
-    data, labels, labels_length = [], [], []
+
+    # Initialize some variables
+    n = len(src_list) * max_aug_nbr
+    img_w, img_h = img_shape
     is_saved = False
-    pbar = tqdm(total=len(src_list))
+    # Status progress bar.
+    p_bar = tqdm(total=len(src_list))
+    # Create random indexes.
+    rand_index = np.random.permutation(n)
+
+    data = np.zeros((n, img_h, img_w))
+    labels = np.zeros((n, max_label_length))
+    labels_length = np.zeros((n, 1))
 
     def valid_img(image):
         # Do some common process to image.
@@ -77,39 +86,44 @@ def data_wrapper(src_list, img_shape, max_label_length,
                 continue
             else:
                 res.append(int(ch))
-        n = len(res)
-        for i in range(max_label_length - n):
+        a = len(res)
+        for i in range(max_label_length - a):
             res.append(10)  # represent '_'
         # Return res for labels, length for labels_length
-        return res, n
+        return res, a
 
+    #
+
+    index = 0
     for path, label in src_list:
         img = cv2.imread(path)
-        data.append(valid_img(img))
         v_lab, v_len = valid_label(label)
-        labels.append(v_lab)
-        labels_length.append(v_len)
+        data[rand_index[index]] = valid_img(img)
+        labels[rand_index[index]] = v_lab
+        labels_length[rand_index[index]][0] = v_len
 
-        if max_aug_nbr != 0 and aug_param_dict is not None and any(aug_param_dict):
+        if max_aug_nbr != 1 and aug_param_dict is not None and any(aug_param_dict):
             is_saved = True
             # Once trigger the data augmentation, it will be saved in local.
             aug = DataAugmentation(img, aug_param_dict)
             # max_aug_nbr = original_img(.also 1) + augment_img
             for aug_img in aug.feed(max_aug_nbr-1):
-                data.append(valid_img(aug_img))
+                index += 1
+                data[rand_index[index]] = valid_img(aug_img)
                 # Different augmentation of images, but same labels and length.
-                labels.append(v_lab)
-                labels_length.append(v_len)
-        pbar.update()
-    pbar.close()
-    data = np.array(data, dtype=np.float64) / 255.0 * 2 - 1
+                labels[rand_index[index]] = v_lab
+                labels_length[rand_index[index]][0] = v_len
+        index += 1
+        p_bar.update()
+    p_bar.close()
+    data.astype(np.float64) / 255.0 * 2 - 1
     data = np.expand_dims(data, axis=-1)
-    labels = np.array(labels, dtype=np.float64)
-    labels_length = np.array(labels_length).T
+    labels.astype(np.float64)
 
     if is_saved:
-        np.savez(name + ".npz", data=data, labels=labels, labels_length=labels_length)
-        print("[*] Data with augmentation has been saved in local disk ('dataset/%s.npz')." % name)
-        return name
+        local_path = "%s.npz" % name
+        np.savez(local_path, data=data, labels=labels, labels_length=labels_length)
+        print("[*] Data with augmentation has been saved in local disk.")
+        return local_path
     else:
         return data, labels, labels_length
