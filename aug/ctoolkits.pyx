@@ -67,7 +67,8 @@ def shear(np.ndarray[uint8_t, ndim=3] img_array,
           unsigned int angle,
           unsigned int img_h,
           unsigned int img_w):
-    """Shear the img randomly.
+    """
+    Shear the img randomly.
     It has two direction: X and Y.
     So it will choose one when call it.
     """
@@ -111,7 +112,8 @@ def shear(np.ndarray[uint8_t, ndim=3] img_array,
 def fill(np.ndarray[uint8_t, ndim=3] img_array,
          unsigned int img_h,
          unsigned int img_w):
-    """Fill the edges by nearest pixel.
+    """
+    Fill the edges by nearest pixel.
     Basically by cutting the img from middle height,
     and for the head, go up and feed the pixel below,
     also for the foot part.
