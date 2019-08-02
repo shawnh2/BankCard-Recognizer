@@ -1,9 +1,10 @@
 from keras import initializers
 from keras import backend as K
 from keras.models import Model
-from keras.layers import (Lambda, Dense, Bidirectional, Flatten, TimeDistributed, Permute,
-                          Activation, Input, LSTM, Conv2D, MaxPooling2D, BatchNormalization)
-
+from keras.layers import (Input, BatchNormalization, Activation, Conv2D, MaxPooling2D,
+                          Permute, Dense, LSTM, Lambda, TimeDistributed, Flatten, Bidirectional)
+from utils import DataGenerator
+from dataset.utils import train_val_split
 
 def ctc_loss_layer(args):
     """
@@ -21,10 +22,15 @@ def ctc_loss_layer(args):
     return batch_cost
 
 
+def fake_ctc_loss(y_true, y_pred):
+    return y_pred
+
+
 class CNN_BLSTM_CTC:
 
     @staticmethod
     def build(img_size=(256, 32), num_classes=11, max_label_length=26):
+
         initializer = initializers.he_normal()
         img_width, img_height = img_size
 
@@ -38,36 +44,36 @@ class CNN_BLSTM_CTC:
             :return: The outputs.
             """
             inputs = BatchNormalization(name="BN_%d" % index)(inputs)
-            inputs = Activation(activation, name="relu_%d" % index)(inputs)
+            inputs = Activation(activation, name="Relu_%d" % index)(inputs)
 
             return inputs
 
         inputs = Input(shape=(img_height, img_width, 1), name='img_inputs')
-        x = Conv2D(64, (3, 3), padding="same", kernel_initializer=initializer, name='conv2d_1')(inputs)
+        x = Conv2D(64, (3, 3), padding="same", kernel_initializer=initializer, name='Conv2d_1')(inputs)
         x = PatternUnits(x, 1)
-        x = MaxPooling2D(strides=2, name='maxpl_1')(x)
-        x = Conv2D(128, (3, 3), padding="same", kernel_initializer=initializer, name='conv2d_2')(x)
+        x = MaxPooling2D(strides=2, name='Maxpool_1')(x)
+        x = Conv2D(128, (3, 3), padding="same", kernel_initializer=initializer, name='Conv2d_2')(x)
         x = PatternUnits(x, 2)
-        x = MaxPooling2D(strides=2, name='maxpl_2')(x)
+        x = MaxPooling2D(strides=2, name='Maxpool_2')(x)
 
-        x = Conv2D(256, (3, 3), padding="same", kernel_initializer=initializer, name='conv2d_3')(x)
+        x = Conv2D(256, (3, 3), padding="same", kernel_initializer=initializer, name='Conv2d_3')(x)
         x = PatternUnits(x, 3)
-        x = Conv2D(256, (3, 3), padding="same", kernel_initializer=initializer, name='conv2d_4')(x)
+        x = Conv2D(256, (3, 3), padding="same", kernel_initializer=initializer, name='Conv2d_4')(x)
         x = PatternUnits(x, 4)
-        x = MaxPooling2D(pool_size=(2, 1), strides=(2, 1), name='maxpl_3')(x)
+        x = MaxPooling2D(pool_size=(2, 1), strides=(2, 1), name='Maxpool_3')(x)
 
-        x = Conv2D(512, (3, 3), padding="same", kernel_initializer=initializer, name='conv2d_5')(x)
+        x = Conv2D(512, (3, 3), padding="same", kernel_initializer=initializer, name='Conv2d_5')(x)
         x = PatternUnits(x, 5)
-        x = Conv2D(512, (3, 3), padding="same", kernel_initializer=initializer, name='conv2d_6')(x)
+        x = Conv2D(512, (3, 3), padding="same", kernel_initializer=initializer, name='Conv2d_6')(x)
         x = PatternUnits(x, 6)
-        x = MaxPooling2D(pool_size=(2, 1), strides=(2, 1), name='maxpl_4')(x)
+        x = MaxPooling2D(pool_size=(2, 1), strides=(2, 1), name='Maxpool_4')(x)
 
-        x = Conv2D(512, (2, 2), padding='same', activation='relu', kernel_initializer=initializer, name='conv2d_7')(x)
+        x = Conv2D(512, (2, 2), padding='same', activation='relu', kernel_initializer=initializer, name='Conv2d_7')(x)
         x = PatternUnits(x, 7)
-        conv_output = MaxPooling2D(pool_size=(2, 1), name="conv_output")(x)
-        x = Permute((2, 3, 1), name='permute')(conv_output)
+        conv_output = MaxPooling2D(pool_size=(2, 1), name="Conv_output")(x)
+        x = Permute((2, 3, 1), name='Permute')(conv_output)
 
-        rnn_input = TimeDistributed(Flatten(), name='for_flatten_by_time')(x)
+        rnn_input = TimeDistributed(Flatten(), name='Flatten_by_time')(x)
         y = Bidirectional(LSTM(256, kernel_initializer=initializer, return_sequences=True),
                           merge_mode='sum', name='LSTM_1')(rnn_input)
         y = BatchNormalization(name='BN_8')(y)
@@ -85,6 +91,18 @@ class CNN_BLSTM_CTC:
 
         return model
 
+    @staticmethod
+    def train(model, src_dir, save_path, img_size, batch_size, max_label_length, down_sample_factor, epochs):
+        model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss})
 
-if __name__ == '__main__':
-    CNN_BLSTM_CTC.build()
+        train_list, val_list = train_val_split(src_dir)
+        train_gen = DataGenerator(train_list, img_size, down_sample_factor, batch_size, max_label_length,
+                                  max_aug_nbr=0, width_shift_range=15, height_shift_range=10, zoom_range=12,
+                                  shear_range=15, rotation_range=20, blur_factor=5, add_noise_factor=0.01)
+        val_gen = DataGenerator(val_list, img_size, down_sample_factor, batch_size, max_label_length)
+        model.fit_generator(generator=train_gen.flow(),
+                            steps_per_epoch=train_gen.data_nbr // batch_size,
+                            validation_data=val_gen.flow(),
+                            validation_steps=val_gen.data_nbr // batch_size,
+                            epochs=epochs)
+        model.save(save_path)

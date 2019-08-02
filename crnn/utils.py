@@ -1,50 +1,72 @@
-import os
-import random
-import shutil
-
-import cv2
 import numpy as np
+from dataset.utils import data_wrapper
 
 
-def train_test_spilt(inputs_dir, output_dir, test_train_ratio=0.2):
-    """Train and test dataset is better to take 4:1 -> (0.8:0.2)
-    The number of this ratio can be changed also.
-    But still recommend 20% of test takes.
-    """
+class DataGenerator:
 
-    if not os.path.exists(inputs_dir) or not os.path.exists(output_dir):
-        raise FileExistsError("Inputs/Outputs dir is not exist.")
+    def __init__(self,
+                 data_list,
+                 img_shape,
+                 batch_size,
+                 down_sample_factor=4,
+                 max_label_length=26,
+                 max_aug_nbr=0,
+                 width_shift_range=0,    # ---------------------
+                 height_shift_range=0,   # |
+                 zoom_range=0,           # |
+                 shear_range=0,          # |
+                 rotation_range=0,       # |>>>>data_augmentation_options
+                 blur_factor=None,       # |
+                 add_noise_factor=0.,    # |
+                 horizontal_flip=False,  # |
+                 vertical_flip=False     # ---------------------
+                 ):
+        # The path of data.
+        self.data_list = data_list
+        self.img_w, self.img_h = img_shape
+        self.batch_size = batch_size
+        self.max_label_length = max_label_length
+        self.pre_pred_label_length = int(self.img_w // down_sample_factor)
+        self.data_nbr = len(data_list)
 
-    inputs_dir_li = [n for n in os.listdir(inputs_dir)]
-    inputs_dir_len = len(inputs_dir_li)
-    test_len = int(inputs_dir_len * test_train_ratio)
+        # the abbreviation of "code:params" in augment operations
+        self.param_dict = {
+            'wsr': width_shift_range,
+            'hsr': height_shift_range,
+            'zor': zoom_range,
+            'shr': shear_range,
+            'ror': rotation_range,
+            'blr': blur_factor,
+            'nof': add_noise_factor,
+            'hfl': horizontal_flip,
+            'vfl': vertical_flip
+        }
+        # the sign of whether taking any augmentation
+        self.max_aug_nbr = max_aug_nbr
+        self.data, self.labels, self.labels_length = data_wrapper(data_list, img_shape, max_label_length,
+                                                                  max_aug_nbr, self.param_dict)
 
-    random.shuffle(inputs_dir_li)
-    test_part = inputs_dir_li[: test_len]
-    train_part = inputs_dir_li[test_len:]
-    train_dir = os.path.join(output_dir, 'train')
-    test_dir = os.path.join(output_dir, 'val')
-    if not os.path.exists(train_dir):
-        os.mkdir(train_dir)
-    if not os.path.exists(test_dir):
-        os.mkdir(test_dir)
+        # Shuffle the data by its index.
+        index = np.random.permutation(self.data_nbr)
+        self.data = self.data[index]
+        self.labels = self.labels[index]
+        self.labels_length = self.labels_length[index]
 
-    for test_name in test_part:
-        test_file_path = os.path.join(inputs_dir, test_name)
-        shutil.copy(test_file_path, test_dir)
-    for train_name in train_part:
-        train_file_path = os.path.join(inputs_dir, train_name)
-        shutil.copy(train_file_path, train_dir)
+    def flow(self):
+        # Feed inputs and outputs to training generator
+        pred_labels_length = np.full((self.batch_size, 1), self.pre_pred_label_length, dtype=np.float64)
 
-    print("[*]Training and validation dataset split successfully.")
+        while True:
+            working_index = np.random.choice(self.data_nbr, self.batch_size, replace=False)
+            working_data = self.data[working_index]
+            working_labels = self.labels[working_index]
+            working_labels_length = self.labels_length[working_index]
+            inputs = {
+                "y_true": working_labels,
+                "img_inputs": working_data,
+                "y_pred_length": pred_labels_length,
+                "y_true_length": working_labels_length
+            }
+            outputs = {"ctc_loss_output": np.zeros((self.batch_size, 1), dtype=np.float64)}
 
-
-
-
-
-def fake_ctc_loss(y_true, y_pred):
-    '''
-    这个函数是为了符合keras comepile的要求入口参数只能有y_true和y_pred
-    之后在结合我们的ctc_loss_layer一起工作
-    '''
-    return y_pred
+            yield (inputs, outputs)
