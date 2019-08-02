@@ -4,7 +4,8 @@ from scipy import ndimage
 
 
 def width_shift_range(img_array, shift_l, shift_r):
-    """Shifting the width of a image.
+    """
+    Shifting the width of a image.
     Basically by cropping the width of an image,
     and then resizing it to original shape.
     """
@@ -15,7 +16,8 @@ def width_shift_range(img_array, shift_l, shift_r):
 
 
 def height_shift_range(img_array, shift_t, shift_b):
-    """Shifting the height of a image.
+    """
+    Shifting the height of a image.
     Basically by cropping the height of an image,
     and then resizing it to original shape.
     """
@@ -26,7 +28,8 @@ def height_shift_range(img_array, shift_t, shift_b):
 
 
 def crop(img_array, x):
-    """Crop image.
+    """
+    Crop image.
     the pixel in x with following orders:
       (from_top, from_bottom, from_left, from_right)
     The value is start from the img bounds.
@@ -50,7 +53,8 @@ def crop(img_array, x):
 
 
 def zoom(img_array, zoom_ranges):
-    """Zoom in the image.
+    """
+    Zoom in the image.
     Basically by using crop to cut the edges,
     and fill the edges by nearest pixel.
     """
@@ -65,7 +69,8 @@ def rotate(img_array, angle):
 
 
 def img_function(img_array, function):
-    """Functions for image array.
+    """
+    Functions for image array.
 
     Example: function: lambda img: 255 - img (reverse image)
                        lambda img: (100.0/255) * img + 100 (zip pixel from 100-200)"""
@@ -75,7 +80,8 @@ def img_function(img_array, function):
 
 
 def blur(img_array, blur_factor):
-    """Blur the image by Gaussian Blur,
+    """
+    Blur the image by Gaussian Blur,
     and it has effects on every channel.
     Recommend: int around 5.
     """
