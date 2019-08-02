@@ -19,7 +19,8 @@ class DataGenerator:
                  blur_factor=None,       # |
                  add_noise_factor=0.,    # |
                  horizontal_flip=False,  # |
-                 vertical_flip=False     # ---------------------
+                 vertical_flip=False,    # ---------------------
+                 has_wrapped_dataset=None
                  ):
         # The path of data.
         self.data_list = data_list
@@ -43,10 +44,16 @@ class DataGenerator:
         }
         # the sign of whether taking any augmentation
         self.max_aug_nbr = max_aug_nbr
-        self.data, self.labels, self.labels_length = data_wrapper(data_list, img_shape, max_label_length,
-                                                                  max_aug_nbr, self.param_dict)
+        if has_wrapped_dataset is not None:
+            self.data, self.labels, self.labels_length = np.load(has_wrapped_dataset)
+        else:
+            sign = data_wrapper(data_list, img_shape, max_label_length, max_aug_nbr, self.param_dict, name="train")
+            if isinstance(sign, str):
+                self.data, self.labels, self.labels_length = np.load("%s.npz" % sign)
+            else:
+                self.data, self.labels, self.labels_length = sign
 
-        # Shuffle the data by its index.
+            # Shuffle the data by its index.
         index = np.random.permutation(self.data_nbr)
         self.data = self.data[index]
         self.labels = self.labels[index]

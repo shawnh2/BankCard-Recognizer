@@ -3,7 +3,7 @@ from keras import backend as K
 from keras.models import Model
 from keras.layers import (Input, BatchNormalization, Activation, Conv2D, MaxPooling2D,
                           Permute, Dense, LSTM, Lambda, TimeDistributed, Flatten, Bidirectional)
-from utils import DataGenerator
+from crnn.utils import DataGenerator
 from dataset.utils import train_val_split
 
 def ctc_loss_layer(args):
@@ -93,16 +93,20 @@ class CNN_BLSTM_CTC:
 
     @staticmethod
     def train(model, src_dir, save_path, img_size, batch_size, max_label_length, down_sample_factor, epochs):
+        print("[*] Training will start soon.")
         model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss})
 
+        print("[*] Preparing data generator.")
         train_list, val_list = train_val_split(src_dir)
         train_gen = DataGenerator(train_list, img_size, down_sample_factor, batch_size, max_label_length,
-                                  max_aug_nbr=0, width_shift_range=15, height_shift_range=10, zoom_range=12,
-                                  shear_range=15, rotation_range=20, blur_factor=5, add_noise_factor=0.01)
+                                  max_aug_nbr=80, width_shift_range=15, height_shift_range=10, zoom_range=12,
+                                  shear_range=15, rotation_range=20, blur_factor=5, add_noise_factor=0.01, has_wrapped_dataset="train.npz")
         val_gen = DataGenerator(val_list, img_size, down_sample_factor, batch_size, max_label_length)
+        print("[*] Training start!")
         model.fit_generator(generator=train_gen.flow(),
-                            steps_per_epoch=train_gen.data_nbr // batch_size,
+                            steps_per_epoch=2*train_gen.data_nbr // batch_size,
                             validation_data=val_gen.flow(),
                             validation_steps=val_gen.data_nbr // batch_size,
                             epochs=epochs)
-        model.save(save_path)
+        model.save(save_path + "model.h5")
+        print("[*] Model has been successfully saved in %s!" % save_path)
