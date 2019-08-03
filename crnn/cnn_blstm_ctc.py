@@ -9,6 +9,7 @@ from keras.layers import (Input, BatchNormalization, Activation, Conv2D, MaxPool
 from crnn.utils import DataGenerator
 from dataset.utils import train_val_split
 
+
 def ctc_loss_layer(args):
     """
     y_true: True label.
@@ -95,7 +96,7 @@ class CNN_BLSTM_CTC:
         return model
 
     @staticmethod
-    def train(model, src_dir, save_dir, img_size, batch_size, max_label_length, down_sample_factor, epochs):
+    def train(model, src_dir, save_dir, img_size, batch_size, max_label_length, down_sample_factor, aug_nbr, epochs):
         print("[*] Setting up for checkpoints.")
         ckpt = callbacks.ModelCheckpoint(save_dir + "ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5",
                                          save_weights_only=True, save_best_only=True)
@@ -106,9 +107,19 @@ class CNN_BLSTM_CTC:
         model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss})
         print("[*] Preparing data generator.")
         train_list, val_list = train_val_split(src_dir)
-        train_gen = DataGenerator(train_list, img_size, down_sample_factor, batch_size, max_label_length,
-                                  max_aug_nbr=50, width_shift_range=15, height_shift_range=10, zoom_range=12,
-                                  shear_range=15, rotation_range=20, blur_factor=5, add_noise_factor=0.01)
+        train_gen = DataGenerator(train_list,
+                                  img_shape=img_size,
+                                  down_sample_factor=down_sample_factor,
+                                  batch_size=batch_size,
+                                  max_label_length=max_label_length,
+                                  max_aug_nbr=aug_nbr,
+                                  width_shift_range=15,
+                                  height_shift_range=10,
+                                  zoom_range=12,
+                                  shear_range=15,
+                                  rotation_range=20,
+                                  blur_factor=5,
+                                  add_noise_factor=0.01)
         val_gen = DataGenerator(val_list, img_size, down_sample_factor, batch_size, max_label_length)
         print("[*] Training start!")
         model.fit_generator(generator=train_gen.flow(),
