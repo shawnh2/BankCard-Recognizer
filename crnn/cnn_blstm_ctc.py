@@ -33,7 +33,7 @@ def fake_ctc_loss(y_true, y_pred):
 class CNN_BLSTM_CTC:
 
     @staticmethod
-    def build(img_size, num_classes, max_label_length):
+    def build(img_size, num_classes, max_label_length, is_training=True):
 
         initializer = initializers.he_normal()
         img_width, img_height = img_size
@@ -90,10 +90,15 @@ class CNN_BLSTM_CTC:
         ctc_loss_output = Lambda(ctc_loss_layer, output_shape=(1,), name='ctc_loss_output')(
             [y_true, y_pred, y_pred_length, y_true_length])
 
+        base_model = Model(inputs=inputs, outputs=y_pred)
+        base_model.summary()
         model = Model(inputs=[y_true, inputs, y_pred_length, y_true_length], outputs=ctc_loss_output)
         model.summary()
 
-        return model
+        if is_training:
+            return model
+        else:
+            return base_model
 
     @staticmethod
     def train(model, src_dir, save_dir, img_size, batch_size, max_label_length, down_sample_factor, aug_nbr, epochs):

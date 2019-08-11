@@ -92,8 +92,6 @@ def data_wrapper(src_list, img_shape, max_label_length,
         # Return res for labels, length for labels_length
         return res, a
 
-    #
-
     index = 0
     for path, label in src_list:
         img = cv2.imread(path)
