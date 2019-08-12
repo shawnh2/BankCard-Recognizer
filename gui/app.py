@@ -1,10 +1,53 @@
 import os
 import datetime
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QIcon, QFont
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtGui import QPixmap, QIcon, QFont, QPainter, QPen
 from PyQt5.QtWidgets import (QPushButton, QHBoxLayout, QVBoxLayout, QDesktopWidget, QWidget,
                              QLabel, QLineEdit, QTextEdit, QFileDialog)
+
+
+class DisplayView(QLabel):
+    """
+    A custom Label, so can load image and display it.
+    With several override methods, now is able to draw a
+    rectangle on the image, so will be convenient to locate
+    the number of bankcard.
+    """
+
+    def __init__(self, logging):
+        super().__init__()
+        self.x0 = 0
+        self.y0 = 0
+        self.x1 = 0
+        self.y1 = 0
+        self.flag = False
+        self.logging = logging
+
+    def mousePressEvent(self, QMouseEvent):
+        self.flag = True
+        self.x0 = QMouseEvent.x()
+        self.y0 = QMouseEvent.y()
+        self.logging.append("[*] Draw a rectangle start from:")
+        self.logging.append("    (x0, y0) = ({}, {})".format(self.x0, self.y0))
+
+    def mouseReleaseEvent(self, QMouseEvent):
+        self.flag = False
+        self.logging.append("[*] Draw a rectangle stop from:")
+        self.logging.append("    (x1, y1) = ({}, {})".format(self.x1, self.y1))
+
+    def mouseMoveEvent(self, QMouseEvent):
+        if self.flag:
+            self.x1 = QMouseEvent.x()
+            self.y1 = QMouseEvent.y()
+            self.update()
+
+    def paintEvent(self, QPaintEvent):
+        super().paintEvent(QPaintEvent)
+        rect = QRect(self.x0, self.y0, self.x1 - self.x0, self.y1 - self.y0)
+        painter = QPainter(self)
+        painter.setPen(QPen(Qt.red, 2, Qt.SolidLine))
+        painter.drawRect(rect)
 
 
 class MainWindow(QWidget):
@@ -22,8 +65,8 @@ class MainWindow(QWidget):
         self.pred_button = QPushButton("Identify")
         self.copy_button = QPushButton("Copy")
         self.display_bar = QLineEdit(self)
-        self.display_img = QLabel()
         self.logging_bar = QTextEdit("Logging begin at {}".format(datetime.datetime.now()))
+        self.display_img = DisplayView(logging=self.logging_bar)
 
         # -----Adjust-----
         self.display_img.setFixedSize(970, 550)
@@ -93,6 +136,7 @@ class MainWindow(QWidget):
             self.logging_bar.append("[*] Choose an image from %s" % name)
             img = QPixmap(name).scaled(self.display_img.width(), self.display_img.height())
             self.display_img.setPixmap(img)
+            self.display_img.setCursor(Qt.CrossCursor)
             self.logging_bar.append(self.tips_text.format("[*] Display it successfully."))
         else:
             self.logging_bar.append("[*] Cancel this loading process.")
