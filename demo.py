@@ -5,7 +5,8 @@
 #
 # Usage: Run this demo with Python.
 #
-# Requirements: Numpy, Scipy, OpenCV2, Cython, Keras, TensorFlow-GPU.
+# Requirements: Numpy, Scipy, OpenCV2, Cython, Keras, TensorFlow-GPU,
+#               PyQt5, clipboard.
 
 import sys
 from PyQt5.QtWidgets import QApplication
