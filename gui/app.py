@@ -17,7 +17,7 @@ class DisplayView(QLabel):
     the number of bankcard.
     """
 
-    def __init__(self, logging):
+    def __init__(self, logging, selected_area):
         super().__init__()
         self.x0 = 0
         self.y0 = 0
@@ -25,6 +25,8 @@ class DisplayView(QLabel):
         self.y1 = 0
         self.flag = False
         self.logging = logging
+        self.selected_area = selected_area
+        self.img = None  # (path, width, height)
 
     def mousePressEvent(self, event):
         if self.pixmap() is None:
@@ -34,7 +36,7 @@ class DisplayView(QLabel):
             self.x0 = event.x()
             self.y0 = event.y()
             self.logging.append("[*] Draw a rect start at: ")
-            self.logging.append("    (x0, y0) = ({}, {})".format(self.x0, self.y0))
+            self.logging.append(" (x0, y0) = ({}, {})".format(self.x0, self.y0))
 
     def mouseReleaseEvent(self, event):
         self.flag = False
@@ -42,9 +44,20 @@ class DisplayView(QLabel):
             self.logging.append(log_text("[!] Please load an image then could draw.", "warning"))
         else:
             self.logging.append("[*] Draw a rect stop at: ")
-            self.logging.append("    (x1, y1) = ({}, {})".format(self.x1, self.y1))
-            q_img = self.pixmap().toImage()
-
+            self.logging.append(" (x1, y1) = ({}, {})".format(self.x1, self.y1))
+            # Generate the selected area of image.
+            img_path, img_width, img_height = self.img
+            img = cv2.imread(img_path)
+            img = cv2.resize(img, (img_width, img_height))
+            img = selected_box(img, self.x0, self.y0, self.x1, self.y1)
+            # Display the selected area of image.
+            height, width, _ = img.shape
+            bytes_per_line = 3 * width
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            q_img = QImage(img.data, width, height, bytes_per_line, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(q_img)
+            self.selected_area.setPixmap(pixmap.scaled(780, 78))
+            self.logging.append(log_text("[*] Displaying the selected area of image.", "ok"))
 
     def mouseMoveEvent(self, event):
         if self.flag:
@@ -72,15 +85,15 @@ class MainWindow(QWidget):
         self.pred_button = QPushButton("Identify")
         self.copy_button = QPushButton("Copy")
         self.display_bar = QLineEdit(self)
-        self.logging_bar = QTextEdit("Logging begin at {}".format(datetime.datetime.now()))
+        self.logging_bar = QTextEdit("Logging at {}".format(datetime.datetime.now()))
         self.select_area = QLabel()
-        self.display_img = DisplayView(self.logging_bar)
+        self.display_img = DisplayView(self.logging_bar, self.select_area)
 
         # -----Adjust-----
-        self.display_img.setFixedSize(970, 550)
+        self.display_img.setFixedSize(900, 550)
         self.display_img.setStyleSheet("QLabel{background:lightgray}")
         self.display_img.setToolTip("Displaying area.")
-        self.select_area.setFixedSize(970, 95)
+        self.select_area.setFixedSize(780, 78)
         self.select_area.setStyleSheet("QLabel{background:lightgray}")
         self.select_area.setToolTip("Selecting area.")
         self.display_bar.setFixedHeight(30)
@@ -99,13 +112,14 @@ class MainWindow(QWidget):
         self.logging_bar.setStyleSheet("QTextEdit{background: rgb(240, 240, 240)}")
         self.logging_bar.setReadOnly(True)
         self.logging_bar.append("BankCardRecognizer by ShawnHu 2019")
+        self.logging_bar.append(log_text("[*] Press 'Identify' button to get start.", "ok"))
 
         # -----Layout-----
         # Left - Row 1
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.display_img, 1, Qt.AlignCenter)
         # Left - Row 2
-        main_layout.addWidget(self.select_area, 1, Qt.AlignCenter)
+        main_layout.addWidget(self.select_area, 1, Qt.AlignLeft)
         # Left - Row 3
         display_line = QHBoxLayout()
         display_line.addWidget(self.load_button, 1)
@@ -126,7 +140,7 @@ class MainWindow(QWidget):
 
         # -----Windows-----
         self.setLayout(total_layout)
-        self.setFixedSize(1280, 720)
+        self.setFixedSize(1200, 700)
         self.setWindowTitle("Bankcard Recognizer")
         self.setWindowIcon(QIcon(self.prefix + "bankcard.png"))
         self.center()
@@ -149,7 +163,9 @@ class MainWindow(QWidget):
             self.last_path = os.path.split(name)[0]
             img = QPixmap(name)
             w, h = max_suitable_shape(img.width(), img.height(), self.display_img.width(), self.display_img.height())
-            self.display_img.setPixmap(img.scaled(w, h))
+            round_w, round_h = round(w), round(h)
+            self.display_img.img = (name, round_w, round_h)
+            self.display_img.setPixmap(img.scaled(round_w, round_h))
             self.display_img.setCursor(Qt.CrossCursor)
             self.logging_bar.append("[*] Choose an image from %s" % name)
             self.logging_bar.append(log_text("[*] Display it successfully.", "ok"))
@@ -163,10 +179,8 @@ class MainWindow(QWidget):
             import clipboard
 
             clipboard.copy(text)
-            self.copy_button.setText("OK")
             self.logging_bar.append(log_text("[*] Copy to clipboard successfully.", "ok"))
         except ImportError:
-            self.copy_button.setText("Fail")
             self.logging_bar.append(log_text("[!] Failure happened: missing component.", "error"))
             self.logging_bar.append(log_text("[!] Try install this component by typing:", "error"))
             self.logging_bar.append(log_text(" 'pip install clipboard' ", "warning"))
@@ -175,7 +189,13 @@ class MainWindow(QWidget):
     def predict(self):
         # Action for identify the bankcard
         try:
-            pass
+            # Start predict from selected area.
+
+            # After auto-prediction.
+            text = """[!] If you're unhappy with your current result,
+                      try using your mouse drag an area of your bankcard image.
+                      And press 'Identify' button again to recreate number."""
+            self.logging_bar.append(log_text(text, "warning"))
         except ImportError as e:
             self.logging_bar.append(log_text("[!] Missing important module.", "error"))
             self.logging_bar.append(log_text("[!] ImportError:" + str(e), "error"))
