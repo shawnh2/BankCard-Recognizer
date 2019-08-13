@@ -9,11 +9,14 @@
 #               PyQt5, clipboard.
 
 import sys
-from PyQt5.QtWidgets import QApplication
-from gui.app import MainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from gui.main import UIMainWindow
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    demo = MainWindow()
+    main_window = QMainWindow()
+    ui = UIMainWindow()
+    ui.setup_ui(main_window)
+    main_window.show()
     sys.exit(app.exec_())
