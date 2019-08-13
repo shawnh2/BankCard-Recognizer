@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPixmap, QIcon, QFont, QPainter, QPen, QImage
 from PyQt5.QtWidgets import (QPushButton, QHBoxLayout, QVBoxLayout, QDesktopWidget, QWidget,
                              QLabel, QLineEdit, QTextEdit, QFileDialog)
-from gui.utils import selected_box, log_text
+from gui.utils import selected_box, log_text, max_suitable_shape
 
 
 class DisplayView(QLabel):
@@ -17,7 +17,7 @@ class DisplayView(QLabel):
     the number of bankcard.
     """
 
-    def __init__(self, logging, led):
+    def __init__(self, logging):
         super().__init__()
         self.x0 = 0
         self.y0 = 0
@@ -25,36 +25,35 @@ class DisplayView(QLabel):
         self.y1 = 0
         self.flag = False
         self.logging = logging
-        self.img_path = None
-        self.led = led
 
-    def mousePressEvent(self, QMouseEvent):
-        self.flag = True
-        self.x0 = QMouseEvent.x()
-        self.y0 = QMouseEvent.y()
-        self.logging.append("[*] Draw a rectangle start from:")
-        self.logging.append("    (x0, y0) = ({}, {})".format(self.x0, self.y0))
-
-    def mouseReleaseEvent(self, QMouseEvent):
-        self.flag = False
-        self.logging.append("[*] Draw a rectangle stop from:")
-        self.logging.append("    (x1, y1) = ({}, {})".format(self.x1, self.y1))
-        # Get selected area of image to display
-        if self.img_path is None:
-            self.logging.append(log_text("[*] Invalid selection! It's NULL!", "warning"))
+    def mousePressEvent(self, event):
+        if self.pixmap() is None:
+            self.flag = False
         else:
-            img_array = cv2.imread(self.img_path)
-            selected_area = selected_box(img_array, self.x0, self.y0, self.x1, self.y1)
-            cv2.imshow("test", selected_area)
+            self.flag = True
+            self.x0 = event.x()
+            self.y0 = event.y()
+            self.logging.append("[*] Draw a rect start at: ")
+            self.logging.append("    (x0, y0) = ({}, {})".format(self.x0, self.y0))
 
-    def mouseMoveEvent(self, QMouseEvent):
+    def mouseReleaseEvent(self, event):
+        self.flag = False
+        if self.pixmap() is None:
+            self.logging.append(log_text("[!] Please load an image then could draw.", "warning"))
+        else:
+            self.logging.append("[*] Draw a rect stop at: ")
+            self.logging.append("    (x1, y1) = ({}, {})".format(self.x1, self.y1))
+            q_img = self.pixmap().toImage()
+
+
+    def mouseMoveEvent(self, event):
         if self.flag:
-            self.x1 = QMouseEvent.x()
-            self.y1 = QMouseEvent.y()
+            self.x1 = event.x()
+            self.y1 = event.y()
             self.update()
 
-    def paintEvent(self, QPaintEvent):
-        super().paintEvent(QPaintEvent)
+    def paintEvent(self, event):
+        super().paintEvent(event)
         rect = QRect(self.x0, self.y0, self.x1 - self.x0, self.y1 - self.y0)
         painter = QPainter(self)
         painter.setPen(QPen(Qt.red, 2, Qt.SolidLine))
@@ -75,14 +74,14 @@ class MainWindow(QWidget):
         self.display_bar = QLineEdit(self)
         self.logging_bar = QTextEdit("Logging begin at {}".format(datetime.datetime.now()))
         self.select_area = QLabel()
-        self.display_img = DisplayView(self.logging_bar, self.select_area)
+        self.display_img = DisplayView(self.logging_bar)
 
         # -----Adjust-----
         self.display_img.setFixedSize(970, 550)
-        self.display_img.setStyleSheet("QLabel{background:white}")
+        self.display_img.setStyleSheet("QLabel{background:lightgray}")
         self.display_img.setToolTip("Displaying area.")
         self.select_area.setFixedSize(970, 95)
-        self.select_area.setStyleSheet("QLabel{background:gray}")
+        self.select_area.setStyleSheet("QLabel{background:lightgray}")
         self.select_area.setToolTip("Selecting area.")
         self.display_bar.setFixedHeight(30)
         self.display_bar.setFont(QFont("Timers", 15))
@@ -142,17 +141,17 @@ class MainWindow(QWidget):
 
     def show_openfile_dialog(self):
         # Action for showing openfile dialog
-        name, type = QFileDialog.getOpenFileName(self,
-                                                 caption="Open file",
-                                                 directory=self.last_path,
-                                                 filter="Image(*.png *.jpg *.jpeg)")
+        name, ext = QFileDialog.getOpenFileName(self,
+                                                caption="Open file",
+                                                directory=self.last_path,
+                                                filter="Image(*.png *.jpg *.jpeg)")
         if name:
             self.last_path = os.path.split(name)[0]
-            self.display_img.img_path = name
-            self.logging_bar.append("[*] Choose an image from %s" % name)
-            pix_img = QPixmap(name).scaled(self.display_img.width(), self.display_img.height())
-            self.display_img.setPixmap(pix_img)
+            img = QPixmap(name)
+            w, h = max_suitable_shape(img.width(), img.height(), self.display_img.width(), self.display_img.height())
+            self.display_img.setPixmap(img.scaled(w, h))
             self.display_img.setCursor(Qt.CrossCursor)
+            self.logging_bar.append("[*] Choose an image from %s" % name)
             self.logging_bar.append(log_text("[*] Display it successfully.", "ok"))
         else:
             self.logging_bar.append("[*] Cancel this loading process.")
