@@ -179,10 +179,11 @@ class UIMainWindow(object):
         self.copy_button.setText(_translate("main_window", "Copy"))
         # Set tool tips
         self.load_button.setStatusTip("Load in Image.")
-        self.identify_button.setStatusTip("Locate number and identify it automatically.")
+        self.identify_button.setStatusTip("Locate number and identify it automatically, it may take a while.")
         self.copy_button.setStatusTip("Copy the result into clipboard.")
         self.zoom_in.setStatusTip("Zoom in the Image.")
         self.zoom_out.setStatusTip("Zoom out the Image.")
         self.rotate_left.setStatusTip("Rotate left.")
         self.rotate_right.setStatusTip("Rotate right.")
         self.diaplay_img.setStatusTip("Toggle Auto or Manual locate mode by double-clicked the view.")
+        self.result_line.setStatusTip("Show the identify result, if wasn't so well please try again.")

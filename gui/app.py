@@ -68,6 +68,7 @@ class APP(UIMainWindow):
             pass
 
     def pose_it(self, img_array):
+        # It will not change original img_array, just a copy.
         pix = array_to_pixmap(img_array)
         self.diaplay_img.set_item_with_stage(pix, img_array, self.selected_img)
         self.diaplay_img.set_scene()
@@ -128,9 +129,9 @@ class APP(UIMainWindow):
             if pred_img is None:
                 self.statusbar.showMessage("Please select an area then start identify.")
                 return
-            self.statusbar.showMessage("Got a selected area with shape{}, start identifying...".format(pred_img.shape))
-            result = single_recognition(pred_img, (256,32), self.model_path)
+            result = single_recognition(pred_img, (256, 32), self.model_path)
             self.result_line.setText(result)
         else:
             # Auto-Locate
             self.statusbar.showMessage("Start Auto-Locate...")
+            # Shall grab original img_array instead of a copy.
