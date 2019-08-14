@@ -2,10 +2,12 @@ import os
 
 import cv2
 import cgitb
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QGraphicsPixmapItem
+from PyQt5.QtGui import QCursor
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QFileDialog
 
 from gui.main import UIMainWindow
+from gui.utils import rotate_bound, array_to_pixmap
 
 # Prevent closing and show its error in stdout.
 cgitb.enable(format("text"))
@@ -19,7 +21,6 @@ class APP(UIMainWindow):
         self.last_path = "./dataset/test/"
         self.zoom_scala = 1
         self.rotate_degree = 0
-        self.rotate_center_point = ()  # (x, y)
         # Activate actions
         self.functions()
 
@@ -51,20 +52,15 @@ class APP(UIMainWindow):
             self.zoom_scala = 1
             self.rotate_degree = 0
             # Load in new image and its info.
-            img = cv2.imread(name)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            y, x, _ = img.shape
-            bytes_per_line = 3 * x
-            self.rotate_center_point = (x/2, y/2)
-            # Add it to Widget.
-            frame = QImage(img.data, x, y, bytes_per_line, QImage.Format_RGB888)
-            pix = QPixmap.fromImage(frame)
-            self.diaplay_img.set_item(pix)
-            self.diaplay_img.set_scene()
-            # Adjust some attributes.
-            self.diaplay_img.item.setTransformOriginPoint(*self.rotate_center_point)
+            self.img_array = cv2.imread(name)
+            self.pose_it(self.img_array.copy())
         else:
             pass
+
+    def pose_it(self, img_array):
+        pix = array_to_pixmap(img_array)
+        self.diaplay_img.set_item_with_stage(pix, img_array, self.selected_img)
+        self.diaplay_img.set_scene()
 
     def click_zoom_in(self):
         if self.diaplay_img.scene():
@@ -85,21 +81,25 @@ class APP(UIMainWindow):
         else:
             self.statusbar.showMessage("No image load in yet!")
 
-    def click_rotate_left(self):
-        # Negative number means left.
+    def click_rotate_right(self):
+        # Negative number means right.
         if self.diaplay_img.scene():
             self.rotate_degree -= 1
-            if self.rotate_degree <= -90:
-                self.rotate_degree = -90
-            self.diaplay_img.item.setRotation(self.rotate_degree)
+            if self.rotate_degree <= -3:
+                self.rotate_degree = 0
+            self.img_array = rotate_bound(self.img_array, self.rotate_degree)
+            self.diaplay_img.viewport().setProperty("cursor", QCursor(Qt.ArrowCursor))
+            self.pose_it(self.img_array.copy())
         else:
             self.statusbar.showMessage("No image load in yet!")
 
-    def click_rotate_right(self):
+    def click_rotate_left(self):
         if self.diaplay_img.scene():
             self.rotate_degree += 1
-            if self.rotate_degree >= 90:
-                self.rotate_degree = 90
-            self.diaplay_img.item.setRotation(self.rotate_degree)
+            if self.rotate_degree >= 3:
+                self.rotate_degree = 0
+            self.img_array = rotate_bound(self.img_array, self.rotate_degree)
+            self.diaplay_img.viewport().setProperty("cursor", QCursor(Qt.ArrowCursor))
+            self.pose_it(self.img_array.copy())
         else:
             self.statusbar.showMessage("No image load in yet!")

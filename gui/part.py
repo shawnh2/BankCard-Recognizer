@@ -2,14 +2,16 @@ from PyQt5.QtGui import QPen, QCursor
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem
 
+from gui.utils import selected_box, array_to_pixmap
+
 
 class DisplayView(QGraphicsView):
 
     def __init__(self, parent=None):
         super(DisplayView, self).__init__(parent)
 
-    def set_item(self, img_item):
-        self.item = DisplayPixmapItem(img_item)
+    def set_item_with_stage(self, img_item, img_array, stage):
+        self.item = DisplayPixmapItem(img_item, img_array, stage)
         # set this so mouse release event can listen.
         self.item.setFlag(QGraphicsItem.ItemIsMovable)
 
@@ -34,9 +36,11 @@ class DisplayView(QGraphicsView):
 
 class DisplayPixmapItem(QGraphicsPixmapItem):
 
-    def __init__(self, pix, parent=None):
+    def __init__(self, pix, origin_img_array, stage, parent=None):
         super(DisplayPixmapItem, self).__init__(parent)
         self.setPixmap(pix)
+        self.img_array = origin_img_array
+        self.stage = stage
         # Some useful attributes
         self.start_point = None
         self.current_point = None
@@ -60,6 +64,14 @@ class DisplayPixmapItem(QGraphicsPixmapItem):
     def mouseReleaseEvent(self, event):
         if self.activate:
             self.flag = False
+            # Manual locate and display it in select area.
+            x0, y0 = int(self.start_point.x()), int(self.start_point.y())
+            x1, y1 = int(self.current_point.x()), int(self.current_point.y())
+            selected_img = selected_box(self.img_array, x0, y0, x1, y1)
+            selected_pix = QGraphicsPixmapItem(array_to_pixmap(selected_img))
+            selected_scene = QGraphicsScene()
+            selected_scene.addItem(selected_pix)
+            self.stage.setScene(selected_scene)
 
     def paint(self, painter, QStyleOptionGraphicsItem, QWidget):
         super(DisplayPixmapItem, self).paint(painter, QStyleOptionGraphicsItem, QWidget)

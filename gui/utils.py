@@ -1,3 +1,15 @@
+import cv2
+import numpy as np
+from PyQt5.QtGui import QImage, QPixmap
+
+
+def array_to_pixmap(img_array):
+    img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+    y, x, _ = img_array.shape
+    bytes_per_line = 3 * x
+    frame = QImage(img_array.data, x, y, bytes_per_line, QImage.Format_RGB888)
+    pix = QPixmap.fromImage(frame)
+    return pix
 
 
 def selected_box(img_array, x0, y0, x1, y1):
@@ -43,3 +55,22 @@ def max_suitable_shape(x, y, limit_x, limit_y):
         return x * factor, y * factor
     else:
         return x, y
+
+
+def rotate_bound(img_array, angle, scale=1.):
+    w = img_array.shape[1]
+    h = img_array.shape[0]
+    # Angle in radians
+    rangle = np.deg2rad(angle)
+    # Calculate new image width and height
+    nw = (abs(np.sin(rangle) * h) + abs(np.cos(rangle) * w)) * scale
+    nh = (abs(np.cos(rangle) * h) + abs(np.sin(rangle) * w)) * scale
+    # Ask OpenCV for the rotation matrix
+    rot_mat = cv2.getRotationMatrix2D((nw * 0.5, nh * 0.5), angle, scale)
+    # Calculate the move from the old center to the new center combined with the rotation
+    rot_move = np.dot(rot_mat, np.array([(nw - w) * 0.5, (nh - h) * 0.5, 0]))
+    # The move only affects the translation, so update the translation part of the transform
+    rot_mat[0, 2] += rot_move[0]
+    rot_mat[1, 2] += rot_move[1]
+    new_img_array = cv2.warpAffine(img_array, rot_mat, (int(np.ceil(nw)), int(np.ceil(nh))), flags=cv2.INTER_LANCZOS4)
+    return new_img_array
