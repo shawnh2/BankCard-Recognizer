@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QFileDialog
 
 from gui.main import UIMainWindow
 from gui.utils import rotate_bound, array_to_pixmap
+from crnn.predict import single_recognition
 
 # Prevent closing and show its error in stdout.
 cgitb.enable(format("text"))
@@ -19,6 +20,7 @@ class APP(UIMainWindow):
     def __init__(self, q_main_window):
         super().setup_ui(q_main_window)
         self.last_path = "./dataset/test/"
+        self.model_path = "./crnn/model/train_weight.h5"
         self.zoom_scala = 1
         self.rotate_degree = 0
         # Activate actions
@@ -31,6 +33,7 @@ class APP(UIMainWindow):
         self.zoom_out.clicked.connect(self.click_zoom_out)
         self.rotate_left.clicked.connect(self.click_rotate_left)
         self.rotate_right.clicked.connect(self.click_rotate_right)
+        self.identify_button.clicked.connect(self.predict)
 
     def copy_to_clipboard(self):
         # Action for copying the identify result to clipboard.
@@ -54,6 +57,13 @@ class APP(UIMainWindow):
             # Load in new image and its info.
             self.img_array = cv2.imread(name)
             self.pose_it(self.img_array.copy())
+        else:
+            pass
+
+    def load_model_from_filedialog(self):
+        name, ext = QFileDialog.getOpenFileName(None, "Load Model", self.last_path, "*.h5")
+        if name:
+            self.model_path = name
         else:
             pass
 
@@ -103,3 +113,24 @@ class APP(UIMainWindow):
             self.pose_it(self.img_array.copy())
         else:
             self.statusbar.showMessage("No image load in yet!")
+
+    def predict(self):
+        # Check model.
+        if not self.diaplay_img.scene():
+            self.statusbar.showMessage("Please load in an Image then start.")
+            return
+        if not os.path.exists(self.model_path):
+            self.load_model_from_filedialog()
+        # Whether is auto or manual locate, just focus on selected area.
+        if self.diaplay_img.item.activate:
+            # Manual-Locate
+            pred_img = self.diaplay_img.item.selected_img
+            if pred_img is None:
+                self.statusbar.showMessage("Please select an area then start identify.")
+                return
+            self.statusbar.showMessage("Got a selected area with shape{}, start identifying...".format(pred_img.shape))
+            result = single_recognition(pred_img, (256,32), self.model_path)
+            self.result_line.setText(result)
+        else:
+            # Auto-Locate
+            self.statusbar.showMessage("Start Auto-Locate...")

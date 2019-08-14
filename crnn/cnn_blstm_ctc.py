@@ -91,9 +91,9 @@ class CNN_BLSTM_CTC:
             [y_true, y_pred, y_pred_length, y_true_length])
 
         base_model = Model(inputs=inputs, outputs=y_pred)
-        base_model.summary()
+        # base_model.summary()
         model = Model(inputs=[y_true, inputs, y_pred_length, y_true_length], outputs=ctc_loss_output)
-        model.summary()
+        # model.summary()
 
         if is_training:
             return model

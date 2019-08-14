@@ -42,6 +42,7 @@ class DisplayPixmapItem(QGraphicsPixmapItem):
         self.img_array = origin_img_array
         self.stage = stage
         # Some useful attributes
+        self.selected_img = None
         self.start_point = None
         self.current_point = None
         self.activate = False
@@ -65,13 +66,17 @@ class DisplayPixmapItem(QGraphicsPixmapItem):
         if self.activate:
             self.flag = False
             # Manual locate and display it in select area.
-            x0, y0 = int(self.start_point.x()), int(self.start_point.y())
-            x1, y1 = int(self.current_point.x()), int(self.current_point.y())
-            selected_img = selected_box(self.img_array, x0, y0, x1, y1)
-            selected_pix = QGraphicsPixmapItem(array_to_pixmap(selected_img))
-            selected_scene = QGraphicsScene()
-            selected_scene.addItem(selected_pix)
-            self.stage.setScene(selected_scene)
+            try:
+                x0, y0 = int(self.start_point.x()), int(self.start_point.y())
+                x1, y1 = int(self.current_point.x()), int(self.current_point.y())
+                self.selected_img = selected_box(self.img_array, x0, y0, x1, y1)
+                selected_pix = QGraphicsPixmapItem(array_to_pixmap(self.selected_img))
+                selected_scene = QGraphicsScene()
+                selected_scene.addItem(selected_pix)
+                self.stage.setScene(selected_scene)
+            except AttributeError:
+                self.selected_img = None
+                return
 
     def paint(self, painter, QStyleOptionGraphicsItem, QWidget):
         super(DisplayPixmapItem, self).paint(painter, QStyleOptionGraphicsItem, QWidget)
