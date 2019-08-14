@@ -1,10 +1,14 @@
 import os
 
 import cv2
+import cgitb
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QGraphicsPixmapItem
 
 from gui.main import UIMainWindow
+
+# Prevent closing and show its error in stdout.
+cgitb.enable(format("text"))
 
 
 class APP(UIMainWindow):
@@ -55,12 +59,10 @@ class APP(UIMainWindow):
             # Add it to Widget.
             frame = QImage(img.data, x, y, bytes_per_line, QImage.Format_RGB888)
             pix = QPixmap.fromImage(frame)
-            self.item = QGraphicsPixmapItem(pix)
-            self.scene = QGraphicsScene()
-            self.scene.addItem(self.item)
-            self.diaplay_img.setScene(self.scene)
+            self.diaplay_img.set_item(pix)
+            self.diaplay_img.set_scene()
             # Adjust some attributes.
-            self.item.setTransformOriginPoint(*self.rotate_center_point)
+            self.diaplay_img.item.setTransformOriginPoint(*self.rotate_center_point)
         else:
             pass
 
@@ -70,7 +72,7 @@ class APP(UIMainWindow):
             # Add a threshold.
             if self.zoom_scala >= 1.5:
                 self.zoom_scala = 1.5
-            self.item.setScale(self.zoom_scala)
+            self.diaplay_img.item.setScale(self.zoom_scala)
         else:
             self.statusbar.showMessage("No image load in yet!")
 
@@ -79,25 +81,25 @@ class APP(UIMainWindow):
             self.zoom_scala -= 0.05
             if self.zoom_scala <= 0.1:
                 self.zoom_scala = 0.1
-            self.item.setScale(self.zoom_scala)
+            self.diaplay_img.item.setScale(self.zoom_scala)
         else:
             self.statusbar.showMessage("No image load in yet!")
 
     def click_rotate_left(self):
         # Negative number means left.
         if self.diaplay_img.scene():
-            self.rotate_degree -= 2
+            self.rotate_degree -= 1
             if self.rotate_degree <= -90:
                 self.rotate_degree = -90
-            self.item.setRotation(self.rotate_degree)
+            self.diaplay_img.item.setRotation(self.rotate_degree)
         else:
             self.statusbar.showMessage("No image load in yet!")
 
     def click_rotate_right(self):
         if self.diaplay_img.scene():
-            self.rotate_degree += 2
+            self.rotate_degree += 1
             if self.rotate_degree >= 90:
                 self.rotate_degree = 90
-            self.item.setRotation(self.rotate_degree)
+            self.diaplay_img.item.setRotation(self.rotate_degree)
         else:
             self.statusbar.showMessage("No image load in yet!")
