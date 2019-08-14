@@ -10,7 +10,10 @@ def selected_box(img_array, x0, y0, x1, y1):
 
 
 def log_text(content, mode):
-    """Show logging panel different infos have different color."""
+    """
+    Show logging panel different infos have different color.
+    But not working on Status Bar.
+    """
     assert mode in ["warning", "ok", "error"]
     # the colors are orange, green, and red
     if mode is "warning":
