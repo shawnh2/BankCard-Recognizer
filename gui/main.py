@@ -13,6 +13,7 @@ from gui.part import DisplayView
 
 
 class UIMainWindow(object):
+
     def setup_ui(self, main_window):
         main_window.setObjectName("main_window")
         main_window.setEnabled(True)
@@ -48,7 +49,7 @@ class UIMainWindow(object):
         sizePolicy.setHeightForWidth(self.selected_img.sizePolicy().hasHeightForWidth())
         self.selected_img.setSizePolicy(sizePolicy)
         self.selected_img.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.selected_img.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.selected_img.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.selected_img.setObjectName("selected_img")
         self.selected_layout.addWidget(self.selected_img)
         self.grid_layout = QtWidgets.QGridLayout()

@@ -48,6 +48,7 @@ class APP(UIMainWindow):
 
     def load_img_from_filedialog(self):
         name, ext = QFileDialog.getOpenFileName(None, "Load Image", self.last_path, "*.png;*.jpg;*.jpeg")
+        self.diaplay_img.viewport().setProperty("cursor", QCursor(Qt.ArrowCursor))
         if name:
             # Saving current path for next load convenience.
             self.last_path = os.path.split(name)[0]

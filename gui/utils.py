@@ -21,21 +21,6 @@ def selected_box(img_array, x0, y0, x1, y1):
     return img_array[y_start: y_start + y, x_start: x_start + x, :]
 
 
-def log_text(content, mode):
-    """
-    Show logging panel different infos have different color.
-    But not working on Status Bar.
-    """
-    assert mode in ["warning", "ok", "error"]
-    # the colors are orange, green, and red
-    if mode is "warning":
-        return '<font color="orange">{}</font>'.format(content)
-    elif mode is "ok":
-        return '<font color="green">{}</font>'.format(content)
-    else:
-        return '<font color="red">{}</font>'.format(content)
-
-
 def max_suitable_shape(x, y, limit_x, limit_y):
     """
     Scale the image to fit in canvas.
@@ -61,10 +46,10 @@ def rotate_bound(img_array, angle, scale=1.):
     w = img_array.shape[1]
     h = img_array.shape[0]
     # Angle in radians
-    rangle = np.deg2rad(angle)
+    r_angle = np.deg2rad(angle)
     # Calculate new image width and height
-    nw = (abs(np.sin(rangle) * h) + abs(np.cos(rangle) * w)) * scale
-    nh = (abs(np.cos(rangle) * h) + abs(np.sin(rangle) * w)) * scale
+    nw = (abs(np.sin(r_angle) * h) + abs(np.cos(r_angle) * w)) * scale
+    nh = (abs(np.cos(r_angle) * h) + abs(np.sin(r_angle) * w)) * scale
     # Ask OpenCV for the rotation matrix
     rot_mat = cv2.getRotationMatrix2D((nw * 0.5, nh * 0.5), angle, scale)
     # Calculate the move from the old center to the new center combined with the rotation
