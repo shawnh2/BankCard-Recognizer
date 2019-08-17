@@ -51,16 +51,20 @@ spends almost 4-5 hours. If you have a nice GPU, you will do better which I'm no
 
 The model's preview:
 
-![model]()
+![model](https://github.com/ShawnHXH/BankCard-Recognizer/blob/master/crnn/model/model.png)
 
 ### /manual locate
 
 Auto locate is achieved by ...
 
+![auto-locate]()
+
 Manual locate is achieved by inheriting from QGraphicView and QGraphicPixmapItem, overriding methods like mousePressEvent, 
 mouseMoveEvent, mouseReleaseEvent and etc. This part only available in GUI.
 
-![manual-locate]()
+![manual-locate1](https://github.com/ShawnHXH/BankCard-Recognizer/blob/master/gui/readme/manual-1.gif)
+
+![manual-locate2](https://github.com/ShawnHXH/BankCard-Recognizer/blob/master/gui/readme/manual-2.gif)
 
 ### gui
 Using QtDesigner to design UI, and PyQt5 to finish other works.
