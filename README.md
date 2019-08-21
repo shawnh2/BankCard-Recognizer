@@ -1,4 +1,7 @@
 # BankCard-Recognizer
+
+![mit](https://img.shields.io/github/license/mashape/apistatus.svg)
+
 Extracting bank-number from bankcard, based on Deep Learning with Keras.
 
 Including auto and manual location, number identification, with GUI.
@@ -9,28 +12,36 @@ Including auto and manual location, number identification, with GUI.
 ## Roadmap
 * data augmentation
 * cnn_blstm_ctc
-* /manual locate
+* EAST/manual locate
 * gui
 
 ## Requirement
 Python 3.6, Tensorflow-gpu, Keras, Cython, OpenCV2, Numpy, Scipy, PyQt5, clipboard.
 
 ## Environment
-My platform is Win10 with Anaconda, NVIDIA GTX 1050.
+My platform is Win10 with Anaconda, PyCharm 2018.3, NVIDIA GTX 1050.
 
 ## Usage
-1. Open the whole project with PyCharm (Mine is 2018.3), then run demo.py.
-2. Or `cd` to this project dir, then run `python ./demo.py`.
-3. Will appear a GUI, press `Load` button to load one image about bankcard.
-4. Press `Identify` button, it will start locate and do identification.
-5. Activate manual location by double click the Image view, then draw the interest area and press `Identify`.
-6. Also can adjust the image by pressing `Rotate` or `Zoom` button.
+1. Download trained model, [CRNN](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`, 
+[EAST]() extracting-code:`wait`. 
+2. Then put CRNN model into `crnn/model`, put EAST model into `east/model`.
+3. Run `python demo.py`.
+4. In GUI, press `Load` button to load one image about bankcard or load from `dataset/test/`. 
+5. Press `Identify` button, it will start locate and do identification.
+6. Activate manual location by double click the Image view, then draw the interest area and press `Identify`.
 
 ## Training
-1. Unzip my dataset in ./dataset/dataset_for_crnn.py.
-2. Run the `run.py` in crnn, and you can change some parameters depends on your hardware.
-3. If you want use your own dataset, put it into `dataset/`.
-4. Change the src_dir in `run.py`.
+### Prepare
+Download my dataset, [CRNN](https://pan.baidu.com/s/1Ji0ZOv-rMSPcN2W6uO0K5Q) extracting-code:`1jax`,
+[EAST](https://pan.baidu.com/s/1UL1OdLEL-uNRQl8d11NkeQ) extracting-code:`pqba`. and unzip dataset in `./dataset`.
+
+### for CRNN
+1. Run the `run.py` in crnn, and you can change some parameters depends on your hardware.
+2. If you want use your own dataset, put it into `dataset/` and change the src_dir in `run.py`.
+3. If doing data augmentation, it will take some time to generate `.npz` file, also recommend `aug_nbr` to be 30-80.
+### for EAST
+1. My dataset is collecting from Internet: Baidu, Google, and thanks [Kesci](https://www.kesci.com/home/dataset/5954cf1372ead054a5e25870). It has been labeld with ICDAR 2015 format, you can see it in `txt/`. This tiny dataset is unable to cover all the situation, if you have rich one, it may perform better.
+2. 
 
 ## About
 ### data augmentation
@@ -44,23 +55,22 @@ Here are some effects:
 ![data-aug-effect2](https://github.com/ShawnHXH/BankCard-Recognizer/blob/master/aug/effects/data-aug2.png)
 
 ### cnn_blstm_ctc
-The model I used, refer to CNN_RNN_CTC. The CNN part is used VGG, with BLSTM as RNN and CTC loss.
+The model I used, refer to CNN_RNN_CTC. The CNN part is using VGG, with BLSTM as RNN and CTC loss.
 
-This model's behave is pretty well. But training it takes time. In my case, `epochs=100, batch_size=16, aug_nbr=50, steps_per_epoch=200`
+This model's behave is pretty well. But training it takes time. In my computer, `epochs=100, batch_size=16, aug_nbr=50, steps_per_epoch=200`
 spends almost 4-5 hours. If you have a nice GPU, you will do better which I'm not :( .
 
 The model's preview:
 
 ![model](https://github.com/ShawnHXH/BankCard-Recognizer/blob/master/crnn/model/model.png)
 
-### /manual locate
+### EAST/manual locate
 
-Auto locate is achieved by ...
+Auto locate is using one famous Text Detection Algorithm - EAST. [See more details](https://zhuanlan.zhihu.com/p/37504120).
 
 ![auto-locate]()
 
-Manual locate is achieved by inheriting from QGraphicView and QGraphicPixmapItem, overriding methods like mousePressEvent, 
-mouseMoveEvent, mouseReleaseEvent and etc. This part only available in GUI.
+Manual locate is only available in GUI. Here're some performance in .gif:
 
 ![manual-locate1](https://github.com/ShawnHXH/BankCard-Recognizer/blob/master/gui/readme/manual-1.gif)
 
@@ -70,4 +80,5 @@ mouseMoveEvent, mouseReleaseEvent and etc. This part only available in GUI.
 Using QtDesigner to design UI, and PyQt5 to finish other works.
 
 ## Reference
-
+1. https://github.com/huoyijie/AdvancedEAST
+2. https://www.cnblogs.com/lillylin/p/9954981.html 
