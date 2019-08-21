@@ -20,7 +20,7 @@ class APP(UIMainWindow):
     def __init__(self, q_main_window):
         super().setup_ui(q_main_window)
         self.last_path = "./dataset/test/"
-        self.model_path = "./crnn/model/train_weight.h5"
+        self.model_path = "./crnn/model/crnn_model.h5"
         self.zoom_scala = 1
         self.rotate_degree = 0
         # Activate actions

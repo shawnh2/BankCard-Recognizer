@@ -134,7 +134,7 @@ class CNN_BLSTM_CTC:
                             callbacks=[ckpt, reduce_lr_cbk, logging],
                             epochs=epochs)
         print("[*] Training finished!")
-        model.save(save_dir + "model.h5")
+        model.save(save_dir + "crnn_model.h5")
         print("[*] Model has been successfully saved in %s!" % save_dir)
 
         # If do data augment, will generate a temp.npz file
