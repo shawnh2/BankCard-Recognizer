@@ -74,6 +74,7 @@ class DisplayPixmapItem(QGraphicsPixmapItem):
                 selected_scene = QGraphicsScene()
                 selected_scene.addItem(selected_pix)
                 self.stage.setScene(selected_scene)
+                self.stage.fitInView(selected_pix)
             except AttributeError:
                 self.selected_img = None
                 return
