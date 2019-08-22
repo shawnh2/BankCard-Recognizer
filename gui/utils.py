@@ -59,3 +59,13 @@ def rotate_bound(img_array, angle, scale=1.):
     rot_mat[1, 2] += rot_move[1]
     new_img_array = cv2.warpAffine(img_array, rot_mat, (int(np.ceil(nw)), int(np.ceil(nh))), flags=cv2.INTER_LANCZOS4)
     return new_img_array
+
+
+def hard_coords(coords: list):
+    """ Make coords to int and both width and height are equal. """
+    coords_array = np.array(coords, dtype=int).reshape((4, 2))
+    x0 = np.min(coords_array[:, 0], axis=0)
+    y0 = np.min(coords_array[:, 1], axis=0)
+    x1 = np.max(coords_array[:, 0], axis=0)
+    y1 = np.max(coords_array[:, 1], axis=0)
+    return x0, y0, x1, y1

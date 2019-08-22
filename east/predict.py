@@ -11,10 +11,10 @@ from east.utils import resize_image, sigmoid
 
 east = EAST()
 east_detect = east.east_network()
-east_detect.load_weights(cfg.saved_model_weights_file_path)
 
 
-def predict_img(img_path, pixel_threshold=cfg.pixel_threshold, quiet=False):
+def predict_img(img_path, model_path, pixel_threshold=cfg.pixel_threshold, quiet=False):
+    east_detect.load_weights(model_path)
     img = image.load_img(img_path)
     d_wight, d_height = resize_image(img, cfg.max_predict_img_size)
     img = img.resize((d_wight, d_height), Image.NEAREST).convert('RGB')
@@ -73,7 +73,8 @@ def predict_img(img_path, pixel_threshold=cfg.pixel_threshold, quiet=False):
                 f_txt.writelines(txt_items)
 
 
-def predict_txt(img_path, pixel_threshold=cfg.pixel_threshold, quiet=False):
+def predict_txt(img_path, model_path, pixel_threshold=cfg.pixel_threshold, quiet=False):
+    east_detect.load_weights(model_path)
     img = image.load_img(img_path)
     d_wight, d_height = resize_image(img, cfg.max_predict_img_size)
     scale_ratio_w = d_wight / img.width
@@ -95,8 +96,7 @@ def predict_txt(img_path, pixel_threshold=cfg.pixel_threshold, quiet=False):
         if np.amin(score) > 0:
             rescaled_geo = geo / [scale_ratio_w, scale_ratio_h]
             rescaled_geo_list = np.reshape(rescaled_geo, (8,)).tolist()
-            txt_item = ','.join(map(str, rescaled_geo_list))
-            txt_items.append(txt_item + '\n')
+            txt_items.append(rescaled_geo_list)
         elif not quiet:
             print('quad invalid with vertex num less then 4.')
     return txt_items
