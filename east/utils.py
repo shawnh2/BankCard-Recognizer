@@ -178,3 +178,24 @@ def point_inside_of_nth_quad(px, py, xy_list, shrink_1, long_edge):
                 nth = -1
                 break
     return nth
+
+
+def resize_image(im, max_img_size=cfg.max_train_img_size):
+    im_width = np.minimum(im.width, max_img_size)
+    if im_width == max_img_size < im.width:
+        im_height = int((im_width / im.width) * im.height)
+    else:
+        im_height = im.height
+    o_height = np.minimum(im_height, max_img_size)
+    if o_height == max_img_size < im_height:
+        o_width = int((o_height / im_height) * im_width)
+    else:
+        o_width = im_width
+    d_wight = o_width - (o_width % 32)
+    d_height = o_height - (o_height % 32)
+    return d_wight, d_height
+
+
+def sigmoid(x):
+    """`y = 1 / (1 + exp(-x))`"""
+    return 1 / (1 + np.exp(-x))
