@@ -6,7 +6,7 @@ from tqdm import tqdm
 from PIL import Image, ImageDraw
 
 from east import cfg
-from east.utils import reorder_vertexes, shrink
+from east.utils import reorder_vertexes, shrink, point_inside_of_quad, point_inside_of_nth_quad
 
 
 data_dir = cfg.data_dir
@@ -19,8 +19,11 @@ show_act_img_dir = os.path.join(data_dir, cfg.show_act_img_dir_name)
 
 
 def preprocess():
-    """ Resize the img and generate gt and act images.
-    Also split train and validation data. """
+    # Missions:
+    # 1. make all the dir that may use.
+    # 2. generate train set.
+    # 3. generate gt (ground truth) images.
+
     if not os.path.exists(train_imgs_dir):
         os.mkdir(train_imgs_dir)
     if not os.path.exists(train_txts_dir):
@@ -48,6 +51,7 @@ def preprocess():
             txt_path = os.path.join(origin_txt_dir, or_img_nm + ".txt")
             with open(txt_path, 'r') as f:
                 tag_list = f.readlines()
+            # this array can save multi-tag labels.
             xy_list_array = np.zeros((len(tag_list), 4, 2))
             # paint gt img from the annotations.
             for anno, i in zip(tag_list, range(len(tag_list))):
@@ -57,14 +61,15 @@ def preprocess():
                 xy_list = np.reshape(anno_array[:8].astype(float), (4, 2))
                 xy_list[:, 0] = xy_list[:, 0] * scale_ratio_w
                 xy_list[:, 1] = xy_list[:, 1] * scale_ratio_h
-                #
+                # make sure the xy_list is in right order.
+                # if not, reorder it then store it.
                 xy_list = reorder_vertexes(xy_list)
                 xy_list_array[i] = xy_list
-                #
                 _, shrink_xy_list, _ = shrink(xy_list)
                 shrink_1, _, long_edge = shrink(xy_list, cfg.shrink_side_ratio)
-                # draw gt quad.
-                #
+                # draw gt image.
+                # green line is label edge.
+                # blue line is shrinking edge.
                 draw.line([tuple(xy_list[0]), tuple(xy_list[1]),
                            tuple(xy_list[2]), tuple(xy_list[3]),
                            tuple(xy_list[0])],
@@ -75,7 +80,7 @@ def preprocess():
                            tuple(shrink_xy_list[3]),
                            tuple(shrink_xy_list[0])],
                           width=2, fill="blue")
-                #
+                # yellow is head and foot line.
                 vs = [[[0, 0, 3, 3, 0], [1, 1, 2, 2, 1]],
                       [[0, 0, 1, 1, 0], [2, 2, 3, 3, 2]]]
                 for q_th in range(2):
@@ -85,14 +90,15 @@ def preprocess():
                                tuple(xy_list[vs[long_edge][q_th][3]]),
                                tuple(xy_list[vs[long_edge][q_th][4]])],
                               width=3, fill='yellow')
-            # save it in npy format.
+            # save train img and labels.
             img.save(os.path.join(train_imgs_dir, or_img_fnm))
             np.save(os.path.join(train_txts_dir, or_img_nm + '.npy'), xy_list_array)
+            # save gt img.
             show_gt_img.save(os.path.join(show_gt_img_dir, or_img_fnm))
             train_val_set.append('{},{},{}\n'.format(or_img_fnm, d_width, d_height))
 
     train_img_list = os.listdir(train_imgs_dir)
-    print('found %d train images.' % len(train_img_list))
+    print('\nfound %d train images.' % len(train_img_list))
     train_label_list = os.listdir(train_txts_dir)
     print('found %d train labels.' % len(train_label_list))
 
@@ -106,18 +112,22 @@ def preprocess():
 
 
 def process_label():
-    """"""
-    # Load from preprocess generated.
+    # Missions:
+    # 1. generate act images.
+    # 2. generate gt labels in train set.
+
+    # Load stuff that generated from preprocess .
     with open(os.path.join(data_dir, cfg.val_fname), 'r') as f_val:
         f_list = f_val.readlines()
     with open(os.path.join(data_dir, cfg.train_fname), 'r') as f_train:
         f_list.extend(f_train.readlines())
     for line, _ in zip(f_list, tqdm(range(len(f_list)))):
         line_cols = str(line).strip().split(',')
-        img_name, width, height = line_cols[0].strip(), int(line_cols[1].strip()), int(line_cols[2].strip())
+        img_name_ext, width, height = line_cols[0].strip(), int(line_cols[1].strip()), int(line_cols[2].strip())
+        img_name, _ = os.path.splitext(img_name_ext)
         gt = np.zeros((height // cfg.pixel_size, width // cfg.pixel_size, 7))
-        xy_list_array = np.load(os.path.join(train_txts_dir, img_name[:-4] + '.npy'))
-        with Image.open(os.path.join(train_imgs_dir, img_name)) as im:
+        xy_list_array = np.load(os.path.join(train_txts_dir, img_name + '.npy'))
+        with Image.open(os.path.join(train_imgs_dir, img_name_ext)) as im:
             draw = ImageDraw.Draw(im)
             for xy_list in xy_list_array:
                 _, shrink_xy_list, _ = shrink(xy_list, cfg.shrink_ratio)
@@ -161,5 +171,14 @@ def process_label():
                                        (px - 0.5 * cfg.pixel_size,
                                         py - 0.5 * cfg.pixel_size)],
                                       width=line_width, fill=line_color)
-            im.save(os.path.join(show_act_img_dir, img_name))
-        np.save(os.path.join(train_txts_dir, img_name[:-4] + '_gt.npy'), gt)
+            # save act img.
+            im.save(os.path.join(show_act_img_dir, img_name_ext))
+        # save gt label in train label.
+        np.save(os.path.join(train_txts_dir, img_name + '_gt.npy'), gt)
+
+
+if __name__ == '__main__':
+    print("[*] Start preprocess...")
+    preprocess()
+    process_label()
+    print("\n[*] Done.")
