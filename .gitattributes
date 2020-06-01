@@ -1,4 +1,0 @@
-*.py linguist-language=Python
-*.pyx linguist-language=Python
-*.pyd linguist-language=Python
-*.c linguist-language=C

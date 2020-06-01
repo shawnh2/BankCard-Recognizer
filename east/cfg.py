@@ -1,6 +1,4 @@
-import os
-
-# ------ CAN CHANGE ------
+# ------ CHANGEABLE ------
 
 # dataset dir
 data_dir = "../dataset/card/"
@@ -36,7 +34,7 @@ steps_per_epoch = total_img * (1 - validation_split_ratio) // batch_size
 validation_steps = total_img * validation_split_ratio // batch_size
 
 
-# ------ BETTER NOT TO CHANGE ------
+# ------ UNCHANGEABLE ------
 
 # dataset
 train_imgs_dir_name = "images_for_train/"
@@ -64,10 +62,6 @@ lambda_side_vertex_code_loss = 1.0
 lambda_side_vertex_coord_loss = 1.0
 
 # model filepath
-if not os.path.exists('model'):
-    os.mkdir('model')
-if not os.path.exists('saved_model_weights'):
-    os.mkdir('saved_model_weights')
 model_weights_path = 'saved_model_weights/weights.{epoch:03d}-{val_loss:.3f}.h5'
 saved_model_file_path = 'model/east_model.h5'
 saved_model_weights_file_path = 'model/east_model_weights.h5'

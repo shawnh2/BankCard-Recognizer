@@ -7,6 +7,11 @@ from east.utils import data_generator
 from east.eastnet import EAST, quad_loss
 
 if __name__ == '__main__':
+    if not os.path.exists('model'):
+        os.mkdir('model')
+    if not os.path.exists('saved_model_weights'):
+        os.mkdir('saved_model_weights')
+
     east = EAST()
     east_network = east.east_network()
     east_network.summary()
