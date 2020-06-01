@@ -11,7 +11,7 @@
 import os
 
 from PIL import Image
-from pylab import *
+from pylab import imshow, array, ginput, show
 
 img_dir = r"card\image"
 txt_dir = r"card\txt"
@@ -37,6 +37,6 @@ for fname in fnm_list:
 	with open(txt_path, 'w') as f:
 		cnt = ",".join(str(c) for c in r)
 		f.write(cnt + ",###")
-		print("[write for %s]" % name, cnt, "[%d/%d]" % (len(fnm_list), i))
+		print(f"[write for {name}, {cnt}]", f"[{len(fnm_list)}/{i}]")
 	i += 1
 	show()

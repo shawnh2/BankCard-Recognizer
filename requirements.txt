@@ -1,0 +1,11 @@
+tensorflow-gpu==1.8.0
+keras==2.1.6
+pillow
+pyqt5
+clipboard
+numpy
+scipy
+matplotlib
+opencv-python
+tqdm
+cython
