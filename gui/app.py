@@ -4,12 +4,11 @@ import cv2
 import cgitb
 from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFileDialog, QGraphicsPixmapItem, QGraphicsScene, QMessageBox
+from PyQt5.QtWidgets import QFileDialog
 
-from east.predict import predict_txt
-from crnn.predict import single_recognition
 from gui.main import UIMainWindow
-from gui.utils import rotate_bound, array_to_pixmap, hard_coords, selected_box
+from gui.threads import PredictThread, AutoLocateThread
+from gui.utils import rotate_bound, array_to_pixmap
 
 # Prevent closing and show its error in stdout.
 cgitb.enable(format("text"))
@@ -21,8 +20,8 @@ class APP(UIMainWindow):
     def __init__(self, q_main_window):
         super().setup_ui(q_main_window)
         self.last_path = "./dataset/test/"
-        self.model_path = ["./crnn/model/crnn_model.h5",
-                           "./east/model/east_model_weights.h5"]
+        self.model_path = {"crnn": "./crnn/model/crnn_model.h5",
+                           "east": "./east/model/east_model_weights.h5"}
         self.zoom_scala = 1
         self.rotate_degree = 0
         self.img_name = None
@@ -62,11 +61,10 @@ class APP(UIMainWindow):
             self.img_array = cv2.imread(self.img_name)
             self.pose_it(self.img_array.copy())
 
-    def load_model_from_filedialog(self, type: int):
-        # 0 is crnn model, 1 is east model
-        name, ext = QFileDialog.getOpenFileName(None, "Load Model", self.last_path, "*.h5")
+    def load_model_from_filedialog(self, model_type):
+        name, ext = QFileDialog.getOpenFileName(None, f"Load {model_type.upper()} Model", self.last_path, "*.h5")
         if name:
-            self.model_path[type] = name
+            self.model_path[model_type] = name
 
     def pose_it(self, img_array):
         # It will not change original img_array, just a copy.
@@ -116,22 +114,15 @@ class APP(UIMainWindow):
         else:
             self.statusbar.showMessage("No image load in yet!")
 
-    def fail_msg(self):
-        # While auto location sometimes failed.
-        QMessageBox.warning(None,
-                            "Error!",
-                            "Auto location failed! Please try manual.",
-                            QMessageBox.Yes)
-
     def predict(self):
         # Check model.
         if not self.diaplay_img.scene():
             self.statusbar.showMessage("Please load in an Image then start.")
             return
-        if not os.path.exists(self.model_path[0]):
-            self.load_model_from_filedialog(0)
-        if not os.path.exists(self.model_path[1]):
-            self.load_model_from_filedialog(1)
+        if not os.path.exists(self.model_path["crnn"]):
+            self.load_model_from_filedialog("crnn")
+        if not os.path.exists(self.model_path["east"]):
+            self.load_model_from_filedialog("east")
 
         if self.diaplay_img.item.activate:
             # Manual-Locate
@@ -139,26 +130,12 @@ class APP(UIMainWindow):
             self.predict_selected_img(pred_img)
         else:
             # Auto-Locate
-            result = predict_txt(self.img_name, self.model_path[1])
-            result_array = cv2.imread(self.img_name)
-            if len(result):
-                result = hard_coords(result[0])
-                pred_img = selected_box(result_array, *result)
-                self.set_selected_img_stage(pred_img)
-                self.predict_selected_img(pred_img)
-            else:
-                self.fail_msg()
+            thread = AutoLocateThread(self.img_name, self.model_path, self.selected_img, self.result_line)
+            thread.run()
 
     def predict_selected_img(self, pred_img):
         if pred_img is None:
             self.statusbar.showMessage("Please select an area then start identify.")
             return
-        result = single_recognition(pred_img, (256, 32), self.model_path[0])
-        self.result_line.setText(result)
-
-    def set_selected_img_stage(self, pred_img):
-        selected_pix = QGraphicsPixmapItem(array_to_pixmap(pred_img))
-        selected_scene = QGraphicsScene()
-        selected_scene.addItem(selected_pix)
-        self.selected_img.setScene(selected_scene)
-        self.selected_img.fitInView(selected_pix)
+        thread = PredictThread(pred_img, (256, 32), self.model_path["crnn"], self.result_line)
+        thread.run()
