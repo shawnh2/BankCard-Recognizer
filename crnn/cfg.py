@@ -14,7 +14,7 @@ DOWNSAMPLE_FACTOR = 4
 
 MODEL_OUT_DIR = "model/"
 IMG_SIZE = (256, 32)
-BATCH_SIZE = 16  # depends on your GPU
+BATCH_SIZE = 8  # depends on your GPU
 EPOCH = 100
 
 # CODE

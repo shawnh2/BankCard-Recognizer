@@ -12,16 +12,13 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = '2'
 
 def run():
     model = build_model(is_training=True)
-
-    print("[*] Training setup.")
     ckpt = callbacks.ModelCheckpoint(MODEL_OUT_DIR + "ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5",
                                      save_weights_only=True, save_best_only=True)
     reduce_lr_cbk = callbacks.ReduceLROnPlateau(patience=3)
-    model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss}, metrics=["acc"])
+    model.compile(optimizer='adam', loss={'ctc_loss_output': fake_ctc_loss})
 
     train_gen = DataGenerator(TRAIN_TXT_PATH)
     val_gen = DataGenerator(VAL_TXT_PATH)
-
     print("[*] Training start!")
     model.fit_generator(generator=train_gen.flow(),
                         steps_per_epoch=train_gen.data_nbr // BATCH_SIZE,

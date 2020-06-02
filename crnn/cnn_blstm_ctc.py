@@ -1,7 +1,7 @@
 from keras import initializers
 from keras import backend as K
 from keras.models import Model
-from keras.layers import (Input, BatchNormalization, Activation, Conv2D, MaxPooling2D,
+from keras.layers import (Input, BatchNormalization, Activation, Conv2D, MaxPooling2D, Dropout,
                           Permute, Dense, LSTM, Lambda, TimeDistributed, Flatten, Bidirectional)
 
 from crnn.cfg import *
@@ -45,6 +45,7 @@ def build_model(is_training: bool = True):
                kernel_initializer=initializer, name='Conv2d_3')(x)
     x = BatchNormalization(name="BN_3")(x)
     x = Activation("relu", name="RELU_3")(x)
+    # x = Dropout(0.4)(x)
     x = Conv2D(256, (3, 3), strides=(1, 1), padding="same", use_bias=True,
                kernel_initializer=initializer, name='Conv2d_4')(x)
     x = BatchNormalization(name="BN_4")(x)
@@ -55,6 +56,7 @@ def build_model(is_training: bool = True):
                kernel_initializer=initializer, name='Conv2d_5')(x)
     x = BatchNormalization(name="BN_5")(x)
     x = Activation("relu", name="RELU_5")(x)
+    # x = Dropout(0.4)(x)
     x = Conv2D(512, (3, 3), strides=(1, 1), padding="same", use_bias=True,
                kernel_initializer=initializer, name='Conv2d_6')(x)
     x = BatchNormalization(name="BN_6")(x)
