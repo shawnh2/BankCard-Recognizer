@@ -2,11 +2,11 @@
 
 ![mit](https://img.shields.io/github/license/mashape/apistatus.svg)
 
-Extracting bank-number from bankcard, based on Deep Learning with Keras.
+Extracting numbers from bankcard, based on Deep Learning with Keras.
 
 Including auto and manual location, number identification, with GUI.
 
-中文 README.md 及讲解: [点击此处链接](https://blog.csdn.net/qq_25000387/article/details/100024666)
+中文BLOG: [点击此处链接](https://blog.csdn.net/qq_25000387/article/details/100024666)
 
 ![bankcard](./gui/icon/bankcard.png)
 
@@ -25,13 +25,15 @@ Python == 3.6
 Windows10 x64, Anaconda, PyCharm 2018.3, NVIDIA GTX 1050.
 
 ## Usage
-1. Download trained model, [CRNN !!! deprecated](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`, 
+1. Download trained model, ~~[CRNN !!! deprecated](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`~~, 
 [EAST](https://pan.baidu.com/s/1R-kD0HGTomS8O0JhXJ-hCA) extracting-code:`qiw5`. 
 2. Then put CRNN model into `crnn/model`, put EAST model into `east/model`.
 3. Run `python demo.py`.
 4. In GUI, press `Load` button to load one image about bankcard or load from `dataset/test/`. 
 5. Press `Identify` button, it will start locate and do identification.
 6. Activate manual location by double click the Image view, then draw the interest area and press `Identify`.
+
+*note: the old CRNN model has been deprecated, now you can take pre-trained network to train a new model.*
 
 ## Training
 ### Prepare
@@ -44,8 +46,7 @@ The structure of `dataset` looks like:
   - /card          # for east
   - /crad_nbr      # for crnn
   - /test
-  - tagger.py
-  - utils.py
+  ...
 ```
 
 ### for CRNN
