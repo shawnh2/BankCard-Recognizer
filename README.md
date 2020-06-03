@@ -25,7 +25,7 @@ Python == 3.6
 Windows10 x64, Anaconda, PyCharm 2018.3, NVIDIA GTX 1050.
 
 ## Usage
-1. Download trained model, [CRNN](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`, 
+1. Download trained model, [CRNN !!! deprecated](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`, 
 [EAST](https://pan.baidu.com/s/1R-kD0HGTomS8O0JhXJ-hCA) extracting-code:`qiw5`. 
 2. Then put CRNN model into `crnn/model`, put EAST model into `east/model`.
 3. Run `python demo.py`.
@@ -49,8 +49,10 @@ The structure of `dataset` looks like:
 ```
 
 ### for CRNN
-1. Run `python crnn/preprocess.py` first.
-2. Run `python crnn/run.py` to train, and you can change some parameters in `crnn/cfg.py`.
+1. You can download [pre-trained-model](https://pan.baidu.com/s/1WseHv9ZzblGm4CO8YTvd_w) extracting-code:`7408`,
+   and add its path to `PRE_TRAINED_MODEL_PATH` in `crnn/run.py`.
+2. Run `python crnn/preprocess.py` first.
+3. Run `python crnn/run.py` to train, and you can change some parameters in `crnn/cfg.py`.
 
 ### for EAST
 1. My dataset is collecting from Internet: Baidu, Google, and thanks [Kesci](https://www.kesci.com/home/dataset/5954cf1372ead054a5e25870).
