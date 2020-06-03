@@ -14,7 +14,7 @@ class DataGenerator:
         self.txt_path = txt_path
         self.img_w, self.img_h = IMG_SIZE
         self.batch_size = BATCH_SIZE
-        self.pre_pred_label_length = int(self.img_w // DOWNSAMPLE_FACTOR)
+        self.pre_input_label_length = self.img_w // DOWNSAMPLE_FACTOR
         # Read from txt file
         with open(self.txt_path, 'r') as f:
             paths, labels = [], []
@@ -32,7 +32,7 @@ class DataGenerator:
 
     def flow(self):
         # Feed inputs and outputs to training generator
-        pred_labels_length = np.full((self.batch_size, 1), self.pre_pred_label_length, dtype=np.float64)
+        input_labels_length = np.full((self.batch_size, 1), self.pre_input_label_length, dtype=np.float64)
         working_labels_length = np.zeros((self.batch_size, 1))
         while True:
             working_data, working_labels = [], []
@@ -56,14 +56,14 @@ class DataGenerator:
                 working_labels.append(label)
                 i += 1
 
-            working_data = np.array(working_data, dtype=np.float64) / 255.0 * 2 - 1
+            working_data = np.array(working_data, dtype=np.float64) / 255.0 * 2.0 - 1.0
             working_data = np.expand_dims(working_data, axis=-1)
             working_labels = np.array(working_labels, dtype=np.float64)
             inputs = {
-                "y_true": working_labels,
+                "labels": working_labels,
                 "img_inputs": working_data,
-                "y_pred_length": pred_labels_length,
-                "y_true_length": working_labels_length
+                "input_length": input_labels_length,
+                "label_length": working_labels_length
             }
             outputs = {"ctc_loss_output": np.zeros((self.batch_size, 1), dtype=np.float64)}
 

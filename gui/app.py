@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QFileDialog
 from gui.main import UIMainWindow
 from gui.threads import PredictThread, AutoLocateThread
 from gui.utils import rotate_bound, array_to_pixmap
+from crnn.cfg import IMG_SIZE
 
 # Prevent closing and show its error in stdout.
 cgitb.enable(format("text"))
@@ -137,5 +138,5 @@ class APP(UIMainWindow):
         if pred_img is None:
             self.statusbar.showMessage("Please select an area then start identify.")
             return
-        thread = PredictThread(pred_img, (256, 32), self.model_path["crnn"], self.result_line)
+        thread = PredictThread(pred_img, IMG_SIZE, self.model_path["crnn"], self.result_line)
         thread.run()
