@@ -9,7 +9,7 @@ from crnn.utils import DataGenerator, fake_ctc_loss
 # Ignore the log messages which level is under 2: TIPS
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '2'
 
-PRE_TRAINED_MODEL_PATH = ''
+PRE_TRAINED_MODEL_PATH = 'model/pre-trained-loss2.825-val_loss2.783.h5'
 
 
 def run():

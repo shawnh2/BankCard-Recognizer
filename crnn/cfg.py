@@ -11,6 +11,7 @@ VAL_TXT_PATH = "../dataset/card_nbr/val.txt"
 NUM_CLASSES = len("0123456789_") + 1  # one for blank in CTC while training
 MAX_LABEL_LENGTH = 26
 DOWNSAMPLE_FACTOR = 4
+VALIDATION_RATIO = 0.15
 
 MODEL_OUT_DIR = "model/"
 IMG_SIZE = (256, 32)

@@ -55,7 +55,7 @@ def main():
             path, label = do_concat(samples, "{:05d}-{:03d}".format(i, n))
             AUG_LIST.append((path, label))
         # Every epoch choose k img from aug list as val img
-        do_sample(k=max(4, int(AUG_NBR * 0.15)))
+        do_sample(k=max(4, int(AUG_NBR * VALIDATION_RATIO)))
 
 
 if __name__ == '__main__':
