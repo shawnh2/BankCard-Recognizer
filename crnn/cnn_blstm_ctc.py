@@ -57,6 +57,8 @@ def build_model(is_training: bool = True):
     y = BatchNormalization()(y)
     y = Bidirectional(LSTM(256, kernel_initializer=initializer, return_sequences=True), name='LSTM_2')(y)
     # END
+    # Would be NUM_CLASSES-1 here if you are using deprecated CRNN model to predict.
+    # Details see: https://github.com/ShawnHXH/BankCard-Recognizer/issues/7
     y_pred = Dense(NUM_CLASSES, activation='softmax', name='y_pred')(y)
     labels = Input(shape=[MAX_LABEL_LENGTH], name='labels')
     input_length = Input(shape=[1], name='input_length')

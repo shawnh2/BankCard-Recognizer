@@ -33,7 +33,7 @@ Windows10 x64, Anaconda, PyCharm 2018.3, NVIDIA GTX 1050.
 5. Press `Identify` button, it will start locate and do identification.
 6. Activate manual location by double click the Image view, then draw the interest area and press `Identify`.
 
-*note: the old CRNN model has been deprecated, now you can take pre-trained network to train a new model.*
+*Notice: the old CRNN model has been deprecated, now you can take pre-trained network to train a new model. But if you want to use it anyway, please see Issues#7.*
 
 ## Training
 ### Prepare
@@ -52,7 +52,7 @@ The structure of `dataset` looks like:
 ### for CRNN
 1. You can download [pre-trained-model](https://pan.baidu.com/s/1WseHv9ZzblGm4CO8YTvd_w) extracting-code:`7408`,
    and add its path to `PRE_TRAINED_MODEL_PATH` in `crnn/run.py`.
-2. Run `python crnn/preprocess.py` first.
+2. Run `python crnn/preprocess.py`.
 3. Run `python crnn/run.py` to train, and you can change some parameters in `crnn/cfg.py`.
 
 ### for EAST
