@@ -1,4 +1,4 @@
-tensorflow-gpu==1.8.0
+tensorflow-gpu==1.15.4
 keras==2.1.6
 pillow
 pyqt5
