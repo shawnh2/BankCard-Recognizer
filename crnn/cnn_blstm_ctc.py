@@ -9,6 +9,8 @@ from crnn.cfg import *
 
 def ctc_loss_layer(args):
     labels, y_pred, input_length, label_length = args
+    # the 2 is critical here since the first couple outputs of the RNN tend to be garbage
+    # y_pred = y_pred[:, 2:, :]
     return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
 
 
@@ -48,15 +50,17 @@ def build_model(is_training: bool = True):
     x = BatchNormalization()(x)
     x = Activation("relu")(x)
     conv_out = MaxPooling2D(pool_size=(2, 1), name="conv_output")(x)
+
     # CNN to RNN
     x = Permute((2, 3, 1))(conv_out)
     rnn_input = TimeDistributed(Flatten())(x)
+
     # RNN
     y = Bidirectional(LSTM(256, kernel_initializer=initializer, return_sequences=True),
                       merge_mode='sum', name='LSTM_1')(rnn_input)
     y = BatchNormalization()(y)
     y = Bidirectional(LSTM(256, kernel_initializer=initializer, return_sequences=True), name='LSTM_2')(y)
-    # END
+
     # Would be NUM_CLASSES-1 here if you are using deprecated CRNN model to predict.
     # Details see: https://github.com/ShawnHXH/BankCard-Recognizer/issues/7
     y_pred = Dense(NUM_CLASSES, activation='softmax', name='y_pred')(y)
