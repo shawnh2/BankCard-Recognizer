@@ -1,7 +1,5 @@
 # BankCard-Recognizer
 
-![mit](https://img.shields.io/github/license/mashape/apistatus.svg)
-
 Extracting numbers from bankcard, based on Deep Learning with Keras.
 
 Including auto and manual location, number identification, with GUI.
@@ -25,15 +23,13 @@ Python == 3.6
 Windows10 x64, Anaconda, PyCharm 2018.3, NVIDIA GTX 1050.
 
 ## Usage
-1. Download trained model, ~~[CRNN !!! deprecated](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`~~, 
+1. Download trained model, [CRNN](https://pan.baidu.com/s/1Cyj1YHhHxlX-3Lgj0vQ35A) extracting-code:`6eqw`, 
 [EAST](https://pan.baidu.com/s/1R-kD0HGTomS8O0JhXJ-hCA) extracting-code:`qiw5`. 
 2. Then put CRNN model into `crnn/model`, put EAST model into `east/model`.
 3. Run `python demo.py`.
 4. In GUI, press `Load` button to load one image about bankcard or load from `dataset/test/`. 
 5. Press `Identify` button, it will start locate and do identification.
 6. Activate manual location by double click the Image view, then draw the interest area and press `Identify`.
-
-*Notice: the old CRNN model has been deprecated, now you can take pre-trained network to train a new model. But if you want to use it anyway, please see Issues#7.*
 
 ## Training
 ### Prepare
@@ -50,9 +46,7 @@ The structure of `dataset` looks like:
 ```
 
 ### for CRNN
-1. You can download [pre-trained-model](https://pan.baidu.com/s/1WseHv9ZzblGm4CO8YTvd_w) extracting-code:`7408`,
-   and add its path to `PRE_TRAINED_MODEL_PATH` in `crnn/run.py`.
-2. Run `python crnn/preprocess.py`.
+1. Run `python crnn/preprocess.py`.
 3. Run `python crnn/run.py` to train, and you can change some parameters in `crnn/cfg.py`.
 
 ### for EAST
