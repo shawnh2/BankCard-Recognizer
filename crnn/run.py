@@ -4,20 +4,14 @@ from keras import callbacks
 
 from crnn.cfg import *
 from crnn.cnn_blstm_ctc import build_model
-from crnn.utils import DataGenerator, fake_ctc_loss
+from crnn.generator import DataGenerator
 
 # Ignore the log messages
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '2'
 
-PRE_TRAINED_MODEL_PATH = 'model/pre-trained-loss2.825-val_loss2.783.h5'
-
 
 def run():
     model = build_model(is_training=True)
-    try:
-        model.load_weights(PRE_TRAINED_MODEL_PATH)
-    except OSError:
-        pass
 
     ckpt = callbacks.ModelCheckpoint(MODEL_OUT_DIR + "ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5",
                                      save_weights_only=True, save_best_only=True)
