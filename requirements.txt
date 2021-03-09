@@ -28,7 +28,7 @@ PyYAML==5.4.1
 scipy==1.5.4
 six==1.15.0
 tensorboard==1.8.0
-tensorflow-gpu==1.8.0
+tensorflow-gpu==2.4.0
 termcolor==1.1.0
 tqdm==4.59.0
 typing-extensions==3.7.4.3
